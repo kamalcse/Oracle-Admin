@@ -1,0 +1,97 @@
+BEGIN
+  DBMS_SCHEDULER.set_attribute(
+    'file_watcher_schedule',
+    'repeat_interval',
+    'freq=minutely; interval=2');
+END;
+/
+
+BEGIN
+  DBMS_SCHEDULER.create_credential(
+    credential_name => 'local_credential',
+    username        => 'oracle',
+    password        => 'oracle');
+END;
+/
+
+BEGIN
+  DBMS_SCHEDULER.create_file_watcher(
+    file_watcher_name => 'test_file_watcher',
+    directory_path    => '/u01/app/oracle/backup',
+    file_name         => '*.txt',
+    credential_name   => 'local_credential',
+    destination       => NULL,
+    enabled           => FALSE);
+END;
+/
+
+CREATE TABLE scott.test_ext (
+  deptno NUMBER(5),
+  dname VARCHAR2(20),
+  loc VARCHAR2(15))
+  ORGANIZATION EXTERNAL 
+  (TYPE ORACLE_LOADER 
+   DEFAULT DIRECTORY EXP_BK
+   ACCESS PARAMETERS 
+   (
+   RECORDS DELIMITED BY NEWLINE
+   FIELDS TERMINATED BY ','
+   )
+ LOCATION ('dept.txt'));
+ 
+create table scott.test as select * from scott.dept where deptno=100;
+
+BEGIN
+  DBMS_SCHEDULER.create_program(
+    program_name        => 'file_watcher_test_prog',
+    program_type        => 'stored_procedure',
+    program_action      => 'file_watcher_test_proc',
+    number_of_arguments => 1,
+    enabled             => FALSE);
+END;
+/
+
+BEGIN
+  DBMS_SCHEDULER.define_metadata_argument(
+    program_name       => 'file_watcher_test_prog',
+    metadata_attribute => 'event_message',
+    argument_position  => 1);
+END;
+/
+
+
+CREATE TABLE file_watcher_output (
+  message VARCHAR2(4000)
+);
+
+CREATE OR REPLACE PROCEDURE file_watcher_test_proc (p_sfwr SYS.SCHEDULER_FILEWATCHER_RESULT) AS
+  l_message file_watcher_output.message%TYPE;
+BEGIN
+  l_message := p_sfwr.directory_path || '/' || p_sfwr.actual_file_name || ' (' || p_sfwr.file_size || ')';
+  INSERT INTO file_watcher_output (message)
+  VALUES (l_message);
+  COMMIT;
+  insert into scott.test select * from scott.test_ext;
+  COMMIT;
+END;
+/
+
+BEGIN
+  DBMS_SCHEDULER.create_job(
+    job_name        => 'file_watcher_test_job',
+    program_name    => 'file_watcher_test_prog',
+    event_condition => NULL,
+    queue_spec      => 'test_file_watcher',
+    auto_drop       => FALSE,
+    enabled         => FALSE);
+END;
+/
+
+BEGIN
+  DBMS_SCHEDULER.set_attribute('file_watcher_test_job','parallel_instances',TRUE);
+END;
+/
+
+EXEC DBMS_SCHEDULER.enable('test_file_watcher');
+EXEC DBMS_SCHEDULER.enable('file_watcher_test_prog');
+EXEC DBMS_SCHEDULER.enable('file_watcher_test_job');

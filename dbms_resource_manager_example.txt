@@ -1,0 +1,39 @@
+exec dbms_resource_manager_privs.grant_system_privilege (grantee_name => 'SCOTT',privilege_name => 'ADMINISTER_RESOURCE_MANAGER',admin_option => False );
+
+exec dbms_resource_manager.create_pending_area();
+
+exec dbms_resource_manager.create_consumer_group(consumer_group => 'OLTP',comment => 'Online users' );
+
+exec dbms_resource_manager.create_plan (plan => 'DAY_PLAN',comment => 'OLTP priority, ...' );
+
+Begin
+dbms_resource_manager.create_plan_directive (
+plan => 'DAY_PLAN',
+group_or_subplan => 'OTHER_GROUPS',
+comment => '...',
+cpu_p1 => 100,
+parallel_degree_limit_p1 => 20,
+ACTIVE_SESS_POOL_P1=>200,
+QUEUEING_P1=>50,
+MAX_EST_EXEC_TIME=>900
+);
+END;
+/
+
+exec dbms_resource_manager.validate_pending_area();
+exec dbms_resource_manager.submit_pending_area();
+
+exec DBMS_RESOURCE_MANAGER.SET_INITIAL_CONSUMER_GROUP('SCOTT','OLTP');
+
+Begin
+dbms_resource_manager_privs.
+grant_switch_consumer_group (
+grantee_name => 'SCOTT',
+consumer_group => 'OLTP',
+grant_option => False );
+END;
+
+
+dba_rsrc_plans plans and status
+dba_rsrc_plan_directives plan directives
+dba_rsrc_consumer_groups consumer groups

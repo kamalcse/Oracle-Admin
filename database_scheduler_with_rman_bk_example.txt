@@ -1,0 +1,66 @@
+BEGIN
+  -- Basic credential.
+  DBMS_SCHEDULER.create_credential(
+    credential_name => 'RMAN_CREDENTIAL',
+    username        => 'oracle',
+    password        => 'oracle');
+END;
+/
+
+SELECT credential_name,
+       username,
+       windows_domain
+FROM   user_scheduler_credentials
+ORDER BY credential_name;
+
+BEGIN
+  DBMS_SCHEDULER.create_job(
+    job_name             => 'rman_backup_job',
+    job_type             => 'EXECUTABLE',
+    job_action           => '/u03/oracle/rman_bk/sc/rman_bk.sh',
+    start_date           => sysdate,
+    repeat_interval      => 'FREQ=DAILY;BYHOUR=11;BYMINUTE=40',
+    auto_drop            => FALSE,
+    enabled              => FALSE,
+    comments             => 'Daily RMAN Backup');
+  DBMS_SCHEDULER.set_attribute('rman_backup_job', 'credential_name', 'RMAN_CREDENTIAL');
+  DBMS_SCHEDULER.enable('rman_backup_job');
+END;
+/
+
+---------------drop job command----------------------------
+exec DBMS_SCHEDULER.drop_job('RMAN_BACKUP_JOB');
+
+
+store_procedure job example:
+
+-------------------------------------------------
+create or replace procedure gather_scott_sp
+is
+begin
+dbms_stats.gather_schema_stats('SCOTT',estimate_percent=>10,cascade=>true);
+end;
+/
+--------------------------------------------------
+
+BEGIN
+  DBMS_SCHEDULER.create_job(
+    job_name             => 'SCOTT_JOB',
+    job_type             => 'stored_procedure',
+    job_action           => 'gather_scott_sp',
+    start_date           => sysdate,
+    repeat_interval      => 'FREQ=MINUTELY;INTERVAL=1',
+    auto_drop            => FALSE,
+    enabled              => FALSE,
+    comments             => 'Gather Scott Statistics');
+  DBMS_SCHEDULER.enable('SCOTT_JOB');
+END;
+/
+
+exec DBMS_SCHEDULER.DISABLE('SCOTT_JOB');
+exec DBMS_SCHEDULER.DROP_JOB('RMAN_BACKUP_JOB');
+
+-----------------------Monitoring Job--------------------
+select job_name,log_date,status, ERROR#,RUN_DURATION
+from dba_SCHEDULER_JOB_RUN_DETAILS
+where job_name='SCOTT_JOB';
