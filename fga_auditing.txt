@@ -1,0 +1,29 @@
+Fine-Grained Auditing Enhancements
+Fine-grained auditing now includes support for DML statements in addition to queries:
+
+
+
+
+    -- Apply the policy to the SAL columnof the EMP table.
+    BEGIN
+      DBMS_FGA.add_policy(
+        object_schema   => 'SCOTT',
+        object_name     => 'EMP',
+        policy_name     => 'SAL_AUDIT',
+        audit_condition => 'DEPTNO=10', -- Equivalent to TRUE
+        audit_column    => 'SAL',
+        statement_types => 'SELECT,INSERT,UPDATE,DELETE');
+    END;
+    /
+
+select empno,ename,job from scott.emp where deptno=10;
+
+select empno,ename,sal,job from scott.emp where deptno=10;
+
+select empno,ename,sal,job from scott.emp where deptno=20;
+
+View the data:
+==================
+select action_name,DBUSERNAME,SQL_TEXT,UNIFIED_AUDIT_POLICIES ,EVENT_TIMESTAMP from unified_AUDIT_trail 
+where EVENT_TIMESTAMP > sysdate -1/24 
+and audit_type<>'Standard';

@@ -1,0 +1,22 @@
+
+CREATE TABLE empaud
+(
+dbuser VARCHAR2(20),
+time date,
+empno NUMBER(5),
+ename VARCHAR2(25),
+old_sal NUMBER(5),
+new_sal NUMBER(5)
+);
+
+
+CREATE OR REPLACE TRIGGER salary_audit
+AFTER UPDATE OF sal ON scott.emp
+REFERENCING NEW AS NEW OLD AS OLD
+FOR EACH ROW
+BEGIN
+IF :old.sal != :new.sal THEN
+INSERT INTO empaud VALUES (user,sysdate,:old.empno,:old.ename,:old.sal,:new.sal);
+END IF;
+END;
+/

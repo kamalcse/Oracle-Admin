@@ -1,0 +1,70 @@
+Loading LOB Data Using SQL*Loader
+This articles shows how SQL*Loader is used to load CLOB and BLOB data, enabling parallel load operations of large quanities of data. There are several methods for SQL*Loader to load LOBs, but here we will focus on the LOBFILE method, using one LOB per file.
+
+Download the following documents and place them on the server filesystem. In this example we will use the "/tmp" directory for all files:
+
+    * clob_test1.txt
+    * clob_test2.txt
+    * blob_test1.doc
+    * blob_test2.doc
+
+The first two documents are plain text files, while the second two are Microsoft Word documents. The documents contain the CLOB and BLOB data to be loaded by SQL*Loader. If you prefer you can create your own documents, but make sure the names are reflected in the datafile below.
+
+The lob_test_data.txt file contains regular data and references to the files holding the CLOB and BLOB data.
+
+    1,one,01-JAN-2006,clob_test1.txt,blob_test1.doc
+    2,two,02-JAN-2006,clob_test2.txt,blob_test2.doc
+
+Now we have all the data, we need a table to load the data into.
+
+    DROP TABLE lob_tab;
+
+    CREATE TABLE lob_tab (
+      number_content    NUMBER(10),
+      varchar2_content  VARCHAR2(100),
+      date_content      DATE,
+      clob_content      CLOB,
+      blob_content      BLOB
+    );
+
+Next, we define the SQL*Loader controlfile, called lob_test.ctl, that will allow us to load the data.
+
+    LOAD DATA 
+    INFILE 'lob_test_data.txt'
+       INTO TABLE lob_tab
+       FIELDS TERMINATED BY ','
+       (number_content    CHAR(10),
+        varchar2_content  CHAR(100),
+        date_content      DATE "DD-MON-YYYY" ":date_content",
+        clob_filename     FILLER CHAR(100),
+        clob_content      LOBFILE(clob_filename) TERMINATED BY EOF,
+        blob_filename     FILLER CHAR(100),
+        blob_content      LOBFILE(blob_filename) TERMINATED BY EOF)
+
+Notice that the filename columns in the datafile are marked as FILLERs, so they are not loaded into the table, but they are used in the LOBFILE definition to identify the loacation of the LOB information.
+
+The data is then loaded using the following SQL*Loader command, run from the command line in the same directory as files.
+
+    sqlldr userid=test/test@db10g control=lob_test.ctl log=lob_test.log bad=lob_test.bad
+
+The following query shows both the regular data and the LOB data have been loaded successfully.
+
+    COLUMN varchar2_content FORMAT A16
+    COLUMN date_content FORMAT A12
+    COLUMN clob_content FORMAT A20
+
+    SELECT number_content,
+           varchar2_content,
+           TO_CHAR(date_content, 'DD-MON-YYYY') AS date_content,
+           clob_content,
+           DBMS_LOB.getlength(blob_content) AS blob_length
+    FROM   lob_tab;
+
+    NUMBER_CONTENT VARCHAR2_CONTENT DATE_CONTENT CLOB_CONTENT         BLOB_LENGTH
+    -------------- ---------------- ------------ -------------------- -----------
+                 1 one              01-JAN-2006  This is a clob test1       24064
+                 2 two              02-JAN-2006  This is a clob test2       24064
+
+    2 rows selected.
+
+    SQL>

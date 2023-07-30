@@ -1,0 +1,130 @@
+--=======================Oracle Data Pump Export Tool================================--
+--Oracle Data Pump Export is a built-in utility program for unloading data and metadata into a set of dump files. 
+--The dump file set then can be imported by the Data Pump Import utility on the same or another Oracle Database system.
+--The dump file set contains table data, database object metadata, and control information that are written in an Oracle-proprietary, binary format.
+--The Data Pump Export works on the server only
+-- the old Export utility is replaced by the Data Pump Export utility from 10g which is 40 times faster.
+Some notable features of the Oracle Data Pump Export tool:
+	1.Compression of output files
+	2.Encryption
+	3.Export via network link
+	4.Parallelism
+	5.Using a subquery to export partial data.
+	6.Renaming tables/schemas/tablespaces
+
+Export Steps:
+	step1: create a directory -> CREATE DIRECTORY <dir_name> AS 'dir_path';
+	step2: create a parameter file like below
+	   customer_exp.par file:
+		userid=ot@pdborcl/Abcd1234
+		directory=<dir_name>
+		dumpfile=customer_exp%U.dmp
+		logfile=customer_exp.log
+		filesize=50K -- the range is from 40K to 16TB.
+		tables=customers
+	step3: invoke the Data Pump Export program to export the table to the dump files: 
+		cmd>expdp parfile=customer.par
+
+
+
+Oracle Data Pump Export Tool:
+-- the old Import Tool(imp) is replaced by the Data Pump Import tool from 10g which is 15 times faster.
+-- the behavior of the tool depends on the import parameters that you specify, either on the command line or in a parameter file.
+
+--====== Export Example and Practice ====-------
+
+Directory
+--------------------
+create or replace directory exp_bk as '/u01/app/oracle/backup';
+grant read,write on directory exp_bk to scott,system;
+
+Expdp
+-------------------
+TABLE MODE:
+
+USERID
+DIRECTORY
+DUMPFILE
+LOGFILE
+ESTIMATE
+TABLES
+JOB_NAME
+
+expdp USERID=scott/tiger DIRECTORY=exp_bk DUMPFILE=emp_dept.dmp LOGFILE=exp_table.log ESTIMATE=statistics TABLES=emp,dept JOB_NAME=exptable
+
+Expdp
+----------------
+SCHEMA MODE:
+
+USERID
+DIRECTORY
+DUMPFILE
+LOGFILE
+ESTIMATE
+SCHEMAS
+JOB_NAME
+
+expdp USERID=system/Sys123dba DIRECTORY=exp_bk DUMPFILE=scott.dmp LOGFILE=exp_scott.log ESTIMATE=statistics SCHEMAS=SCOTT JOB_NAME=expschema
+
+
+Expdp
+--------------
+FULL MODE:
+
+USERID
+DIRECTORY
+DUMPFILE
+LOGFILE
+ESTIMATE
+FULL
+JOB_NAME
+
+expdp USERID=system/Sys123dba DIRECTORY=exp_bk DUMPFILE=full.dmp LOGFILE=exp_full.log ESTIMATE=statistics FULL=Y JOB_NAME=expfull
+
+parallel
+
+expdp USERID=system/Sys123dba DIRECTORY=exp_bk DUMPFILE=full%U.dmp LOGFILE=exp_par_full.log parallel=2 ESTIMATE=statistics FULL=Y JOB_NAME=expperfull
+
+
+--=======================Oracle Data Pump Import Tool================================--
+Import Steps:
+	step1: create a parameter file like below
+	  customer_imp.par file:
+		userid=ot@pdborcl/Abcd1234
+		directory=ot_external
+		dumpfile=customer_exp%U.dmp
+		logfile=customer_imp.log
+		remap_table=ot.customers:customers_bk  --renames the customers table to customers_bk table.
+	step2: impdp command to invoke the Data Pump Import tool
+		cmd> impdp parfile=customer_imp.par
+
+--====== Import Example and Practice ====-------
+impdp
+----------------
+TABLE MODE:
+
+USERID
+DIRECTORY
+DUMPFILE
+LOGFILE
+TABLES
+JOB_NAME
+
+impdp USERID=scott/tiger DIRECTORY=exp_bk DUMPFILE=emp_dept.dmp LOGFILE=imp_table.log TABLES=emp,dept JOB_NAME=imptable  --ESTIMATE=statistics should not be given
+
+impdp
+------------------
+SCHEMA MODE:
+
+USERID
+DIRECTORY
+DUMPFILE
+LOGFILE
+SCHEMAS
+JOB_NAME
+
+impdp USERID=system/Sys123dba DIRECTORY=exp_bk DUMPFILE=scott.dmp LOGFILE=imp_scott.log SCHEMAS=SCOTT JOB_NAME=impschema --ESTIMATE=statistics should not be given
+
+Remap Capabilites:
+
+impdp USERID=system/Sys123dba DIRECTORY=exp_bk DUMPFILE=scott.dmp LOGFILE=imp_scott.log REMAP_SCHEMA=scott:dba177 REMAP_TABLESPACE=users:tsapp JOB_NAME=impschema

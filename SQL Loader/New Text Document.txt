@@ -1,0 +1,4 @@
+
+
+
+sqlldr userid=scott/tiger control=/u01/app/oracle/backup/loader_control.ctl log=/u01/app/oracle/backup/emp.log bad=/u01/app/oracle/backup/emp.bad discard=/u01/app/oracle/backup/emp.discard

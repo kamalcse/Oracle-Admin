@@ -1,0 +1,9 @@
+CREATE [OR REPLACE] [PUBLIC] SYNONYM [schema .] synonym_name
+  FOR [schema .] object_name [@ dblink];
+
+CREATE OR REPLACE PUBLIC  SYNONYM TEMP_RDS_DEPOSIT_BALANCE 
+  FOR rdsdata.TEMP_RDS_DEPOSIT_BALANCE;
+  
+GRANT select on rdsdata.TEMP_RDS_DEPOSIT_BALANCE to gbdata;
+
+commit;

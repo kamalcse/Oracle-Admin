@@ -1,0 +1,109 @@
+
+Multiplex Controlfile:
+=================================
+
+select name from v$controlfile;
+name
+===========================================
+/u01/app/oracle/oradata/ORCL/control01.ctl
+/u01/app/oracle/oradata/ORCL/control02.ctl
+
+alter system set control_files='/u01/app/oracle/oradata/ORCL/control01.ctl', '/u02/app/oracle/oradata/ORCL/control02.ctl' scope=spfile;
+shutdown immediate
+copy the control02.ctl to /u02/app/oracle/oradata/ORCL
+startup
+select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
+/u01/app/oracle/oradata/ORCL/control01.ctl
+/u02/app/oracle/oradata/ORCL/control02.ctl
+
+Multiplex redolog file Group:
+============================================
+
+SQL> select GROUP#,bytes/1024/1024 "MB",MEMBERS from v$log;
+
+    GROUP#         MB    MEMBERS
+---------- ---------- ----------
+         1        200          1
+         2        200          1
+         3        200          1
+
+
+
+SQL> select group#,member from v$logfile;
+
+    GROUP# MEMBER
+---------- ----------------------------------------
+         3 /u01/app/oracle/oradata/ORCL/redo03.log
+         2 /u01/app/oracle/oradata/ORCL/redo02.log
+         1 /u01/app/oracle/oradata/ORCL/redo01.log
+
+alter database add logfile member '/u02/app/oracle/oradata/ORCL/redo01a.log' to GROUP 1;
+alter database add logfile member '/u02/app/oracle/oradata/ORCL/redo02a.log' to GROUP 2;
+alter database add logfile member '/u02/app/oracle/oradata/ORCL/redo03a.log' to GROUP 3;
+
+SQL> select GROUP#,bytes/1024/1024 "MB",MEMBERS from v$log;
+
+    GROUP#         MB    MEMBERS
+---------- ---------- ----------
+         1        200          2
+         2        200          2
+         3        200          2
+
+SQL> select group#,member from v$logfile;
+
+    GROUP# MEMBER
+---------- ----------------------------------------
+         3 /u01/app/oracle/oradata/ORCL/redo03.log
+         2 /u01/app/oracle/oradata/ORCL/redo02.log
+         1 /u01/app/oracle/oradata/ORCL/redo01.log
+         1 /u02/app/oracle/oradata/ORCL/redo01a.log
+         2 /u02/app/oracle/oradata/ORCL/redo02a.log
+         3 /u02/app/oracle/oradata/ORCL/redo03a.log
+
+
+Enabled Archivelog Mode:
+=====================================
+SQL> select log_mode from v$database;
+
+LOG_MODE
+------------
+NOARCHIVELOG
+
+SQL> shutdown immediate
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL> startup mount
+ORACLE instance started.
+
+Total System Global Area 2147481648 bytes
+Fixed Size                  8898608 bytes
+Variable Size             570425344 bytes
+Database Buffers         1560281088 bytes
+Redo Buffers                7876608 bytes
+Database mounted.
+SQL> alter database archivelog;
+
+Database altered.
+
+SQL> alter database open;
+
+Database altered.
+
+SQL> select log_mode from v$database;
+
+LOG_MODE
+------------
+ARCHIVELOG
+
+SQL> archive log list
+Database log mode              Archive Mode
+Automatic archival             Enabled
+Archive destination            USE_DB_RECOVERY_FILE_DEST
+Oldest online log sequence     9
+Next log sequence to archive   11
+Current log sequence           11
+SQL>

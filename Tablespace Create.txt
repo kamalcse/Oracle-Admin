@@ -1,0 +1,50 @@
+
+
+---=============== Command on Tablespaces ==================----
+ALTER TABLESPACE READ ONLY
+
+SQL>CREATE TABLESPACE <tablespace_name> DATAFILE 'tbs1_data.dbf' SIZE 1m [AUTOEXTEND ON|<Size in m,g>]; -- to create tablespace
+SQL>ALTER DATABASE DATAFILE 'tbs1_data.dbf' RESIZE 10m; -- to extend the tablespace
+SQL>ALTER TABLESPACE <tablespace_name> ADD DATAFILE '<path_to_datafile>' SIZE <size>; -- to add new data file in tablespace
+SQL>DROP TABLESPACE <tablespace_name>  [INCLUDING CONTENTS [AND | KEEP] DATAFILES] [CASCADE CONSTRAINTS]; -- to drop a tablespace
+SQL>SELECT tablespace_name, file_name, bytes / 1024/ 1024  MB FROM  dba_data_files; -- to show tablespace
+SQL>SELECT tablespace_name, bytes / 1024 / 1024 MB FROM  dba_free_space WHERE tablespace_name = 'TBS1'; -- to check the freespace in a tablespace.
+-----create a new table in a specific tablespace 
+CREATE TABLE t1(
+   id INT GENERATED ALWAYS AS IDENTITY, 
+   c1 VARCHAR2(32)
+) TABLESPACE tbs1;
+
+SQL>CREATE TEMPORARY TABLESPACE <tablespace_name> TEMPFILE '<path_to_file>' SIZE <size in m,g>; -- to create temporary tablespace
+SQL>ALTER DATABASE DEFAULT TEMPORARY TABLESPACE <tablespace_name>; --to change default temporay tablespace.
+SQL>SELECT tablespace_name, file_name, bytes/1024/1024 MB, status FROM dba_temp_files; -- to show temporary tablespaces.
+SQL>SELECT property_name, property_value FROM database_properties WHERE property_name='DEFAULT_TEMP_TABLESPACE'; --to check which tablespace is default
+-- temporary tablespaces cannot be deleted. to delete first make make other one temporary then execute drop command.
+SQL>ALTER DATABASE DEFAULT TEMPORARY TABLESPACE temp;
+SQQL>DROP TABLESPACE temp2 INCLUDING CONTENTS AND DATAFILES;
+
+--A tablespace group can be assigned as a default temporary tablespace for the database or a temporary tablespace for a user.
+--Oracle does not provide a statement to create a tablespace group explicitly.
+--Oracle automatically drops a tablespace group when you remove the last temporary tablespace from the tablespace group.
+-- to create tablespace group automatically we can use following command.
+SQL>CREATE TEMPORARY TABLESPACE <tablespace_name> TEMPFILE 'path_to_file' SIZE 50M TABLESPACE GROUP <group_name>;
+or
+SQL>ALTER TABLESPACE <tablespace_name> TABLESPACE GROUP <tablespace_group_name>;  -- to move a tablespace to another tablespace group
+SQL>SELECT * FROM DBA_TABLESPACE_GROUPS; -- to view all tablespace group
+SQL>ALTER DATABASE DEFAULT TEMPORARY TABLESPACE <tablespace_group_name>; --to assign a tablespace group as the default temporary tablespace
+
+--================ Example and Priactice ==================
+CREATE TABLESPACE TSAPP 
+DATAFILE '/u01/app/oracle/oradata/ORCL/TSAPP01.DBF' 
+SIZE 1G 
+SEGMENT SPACE MANAGEMENT AUTO 
+EXTENT MANAGEMENT LOCAL 
+AUTOALLOCATE;
+
+ALTER DATABASE DATAFILE '/u01/app/oracle/oradata/ORCL/TSAPP01.DBF' RESIZE 2G;
+
+ALTER TABLESPACE tsapp
+ADD DATAFILE '/u01/app/oracle/oradata/ORCL/TSAPP02.DBF' 
+SIZE 1G;
+
+DROP TABLESPACE TSAPP INCLUDING CONTENTS AND DATAFILES;

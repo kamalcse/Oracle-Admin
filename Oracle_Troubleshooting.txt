@@ -1,0 +1,6 @@
+--========ORA-01033: ORACLE initialization or shutdown in progress
+1.First, login to the database instance as a SYSDBA
+2.Second, issue the following statement to check the status of the current instance:
+	SQL> select status, database_status from v$instance;
+3.Third, change the state of the Oracle Database instance to OPEN:
+	SQL> alter database open;

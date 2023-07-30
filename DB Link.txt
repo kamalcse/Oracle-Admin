@@ -1,0 +1,45 @@
+--A database link is a connection from the Oracle database to another remote database. 
+--The remote database can be an Oracle Database or any ODBC compliant database such as SQL Server or MySQL.
+
+--There are two types of database links: public and private.
+--Private database links are visible to the owners while public database links are visible to all users in the database
+--To create a private database link
+SQL>CREATE [PUBLIC] DATABASE LINK <database_link> 
+    CONNECT TO remote_user IDENTIFIED BY password
+    USING '(DESCRIPTION=
+                (ADDRESS=(PROTOCOL=TCP)(HOST=oracledb.example.com)(PORT=1521))
+                (CONNECT_DATA=(SERVICE_NAME=service_name))
+            )';
+or
+--add the following entry to tnsnames.ora
+remote_database =
+(DESCRIPTION=
+                (ADDRESS=(PROTOCOL=TCP)(HOST=oracledb.example.com)(PORT=1521))
+                (CONNECT_DATA=(SERVICE_NAME=service_name))
+            )
+--then run following
+SQL>CREATE [PUBLIC] DATABASE LINK <database_link>
+    CONNECT TO <remote_user> IDENTIFIED BY <password>
+    USING 'remote_database';
+
+--Remote table access way:
+  SQL> SELECT * FROM remote_table@database_link;
+
+--Using a synonym to simplify the syntax for accessing objects via a database link
+ SQL>CREATE SYNONYM local_table FOR remote_table@database_link;
+ SQL> SELECT * FROM local_table;
+
+-- Alter a DB link
+--To execute the ALTER DATABASE LINK and ALTER PUBLIC DATABASE LINK statements, your account needs to have the ALTER DATABASE LINK SYSTEM and ALTER PUBLIC DATABASE LINK system privilege respectively.
+ALTER [PUBLIC] DATABASE LINK <database_link> 
+CONNECT TO remote_user IDENTIFIED BY new_password;
+
+--DROP DATABASE LINK statement
+SQL> DROP [PUBLIC] DATABASE LINK <database_link>;
+
+
+Here are some best practices using the database links:
+
+1.Naming convention: the name of the database links should reflect the nature of data, not the database server. For example, instead of naming a database link SALES_PRD, you name it as SALES.
+2.Remote database users: you should create a user dedicated for a database link. In addition, you should not give this user to anyone else. If you don’t follow this, the database will not work when someone changes the password of the user or even delete it.
+3.Use a service-specific entry in the tnsnames.ora instead of the database-specific alias so that you copy between product, test, and development environments, you don’t have to recreate the database link.

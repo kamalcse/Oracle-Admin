@@ -1,0 +1,200 @@
+Enable:
+================================
+SELECT value FROM v$option WHERE parameter = 'Unified Auditing';
+VALUE
+-----------------
+FALSE
+sqlplus / as sysdba 
+
+shutdown immediate;
+exit
+
+cd $ORACLE_HOME/rdbms/lib
+
+ make -f ins_rdbms.mk uniaud_on ioracle
+ 
+
+sqlplus / as sysdba
+
+startup
+
+Checking
+========================
+SELECT value FROM v$option WHERE parameter = 'Unified Auditing';
+VALUE
+-----------------
+TRUE
+
+SQL> select distinct POLICY_NAME from AUDIT_UNIFIED_POLICIES;
+
+POLICY_NAME
+-------------------------------------------------------------------------------
+ORA_CIS_RECOMMENDATIONS
+ORA_RAS_POLICY_MGMT
+ORA_RAS_SESSION_MGMT
+ORA_LOGON_FAILURES
+ORA_SECURECONFIG
+ORA_DATABASE_PARAMETER
+ORA_ACCOUNT_MGMT
+
+SQL>  select distinct policy_name from AUDIT_UNIFIED_ENABLED_POLICIES;
+POLICY_NAME
+-----------------------------------------
+ORA_LOGON_FAILURES
+ORA_SECURECONFIG
+
+SQL>  select AUDIT_OPTION from AUDIT_UNIFIED_POLICIES where POLICY_NAME='ORA_SECURECONFIG';
+
+LOGMINING
+TRANSLATE ANY SQL
+EXEMPT REDACTION POLICY
+PURGE DBA_RECYCLEBIN
+ADMINISTER KEY MANAGEMENT
+DROP ANY SQL TRANSLATION PROFILE
+ALTER ANY SQL TRANSLATION PROFILE
+CREATE ANY SQL TRANSLATION PROFILE
+CREATE SQL TRANSLATION PROFILE
+CREATE EXTERNAL JOB
+CREATE ANY JOB
+GRANT ANY OBJECT PRIVILEGE
+EXEMPT ACCESS POLICY
+CREATE ANY LIBRARY
+GRANT ANY PRIVILEGE
+DROP ANY PROCEDURE
+ALTER ANY PROCEDURE
+CREATE ANY PROCEDURE
+
+Below are few test cases on unified audit policy :
+TEST CASE 1 : ( default audit option):
+
+DROP DIRECTORY , which is one of the audit option of the default policy ORA_SECURECONFIG.
+Connect to bsstdba and drop a directory
+
+SQL> show user
+USER is "BSSTDBA"
+SQL> drop directory TEST;
+Directory dropped.
+
+Check the audit report
+
+set lines 299
+col SQL_TEXT for a23
+col action_name for a18
+col UNIFIED_AUDIT_POLICIES for a23
+SQL>  select action_name,SQL_TEXT,UNIFIED_AUDIT_POLICIES ,EVENT_TIMESTAMP from unified_AUDIT_trail where DBUSERNAME='BSSTDBA' and EVENT_TIMESTAMP > sysdate -1/24;
+
+
+ACTION_NAME        SQL_TEXT                UNIFIED_AUDIT_POLICIES  EVENT_TIMESTAMP
+------------------ ----------------------- ----------------------- ------------------------------
+LOGON                                      ORA_LOGON_FAILURES      16-FEB-17 11.29.03.981436 PM
+DROP DIRECTORY     drop directory TEST2    ORA_SECURECONFIG        16-FEB-17 11.29.59.924533 PM
+
+
+TEST CASE 2 : CREATE AUDIT POLICY WITH MULTIPLE AUDIT OPTIONS:
+create audit policy test_case2
+  ACTIONS CREATE TABLE, 
+  INSERT ON classdba.EMP_TAB,
+  TRUNCATE TABLE,
+  select on classdba.PROD_TAB;
+
+set lines 299
+col POLICY_NAME for a23
+col AUDIT_OPTION for a12
+col AUDIT_CONDITION for a12
+col OBJECT_SCHEMA for a23
+col OBJECT_NAME for a14
+select POLICY_NAME,audit_option,AUDIT_CONDITION,OBJECT_SCHEMA,OBJECT_NAME FROM AUDIT_UNIFIED_POLICIES where POLICY_NAME='TEST_CASE2';
+
+POLICY_NAME  AUDIT_OPTION          AUDIT_CONDITION    OBJECT_SCHEMA   OBJECT_NAME
+------------ --------------------- ------------------ --------------- ------------------
+TEST_CASE2   CREATE TABLE          NONE               NONE            NONE
+TEST_CASE2   TRUNCATE TABLE        NONE               NONE            NONE
+TEST_CASE2   INSERT                NONE               BSSTDBA         EMP_TAB
+TEST_CASE2   SELECT                NONE               BSSTDBA         PROD_TAB
+
+
+SQL> select distinct policy_name from AUDIT_UNIFIED_ENABLED_POLICIES where policy_name='TEST_CASE2';
+
+no rows selected
+
+Unless we enable the policy, auditing conditions wont be evaluated
+
+SQL> audit policy TEST_CASE2;
+
+Audit succeeded.
+
+SQL> select distinct policy_name from AUDIT_UNIFIED_ENABLED_POLICIES where policy_name='TEST_CASE2';
+
+
+POLICY_NAME
+------------
+TEST_CASE2
+
+
+Do some changes and generate audit report:
+
+SQL> select action_name,SQL_TEXT,UNIFIED_AUDIT_POLICIES ,EVENT_TIMESTAMP from unified_AUDIT_trail where DBUSERNAME='STCDBA' and EVENT_TIMESTAMP > sysdate -1/24;
+
+ACTION_NAME        SQL_TEXT                UNIFIED_AUDIT_POLICIES  EVENT_TIMESTAMP
+------------------ ----------------------- ----------------------- --------------------------------
+CREATE TABLE       create table EMP_NUM as TEST_CASE2              17-FEB-17 09.19.16.054209 AM
+                    select * from classdba.
+                   emp_tab
+
+EXCLUDE ONE USER FROM THE POLICY:
+SQL> select USER_NAME,POLICY_NAME,ENABLED_OPT from AUDIT_UNIFIED_ENABLED_POLICIES where POLICY_NAME='TEST_CASE2';
+
+
+USER_NAME     POLICY_NAME  ENABLED_OPT
+------------- ------------ -----------------------
+ALL USERS     TEST_CASE2   BY
+
+
+SQL> audit policy TEST_CASE2 except proddba;
+audit policy TEST_CASE2 except proddba
+*
+ERROR at line 1:
+ORA-46350: Audit policy TEST_CASE2 already applied with the BY clause.
+
+Once audit policy is enabled, if we try to enable again, it will throw error. So to change the audit condition, disable and enable with new condition.
+
+SQL> noaudit policy TEST_CASE2;
+
+Noaudit succeeded.
+
+SQL> audit policy TEST_CASE2 except stcdba;
+
+Audit succeeded.
+
+SQL> select USER_NAME,POLICY_NAME,ENABLED_OPT from AUDIT_UNIFIED_ENABLED_POLICIES where POLICY_NAME='TEST_CASE2';
+
+USER_NAME     POLICY_NAME  ENABLED_OPT
+------------- ------------ -----------------------
+PRODDBA        TEST_CASE2   EXCEPT
+
+
+Now create a table from stcdba.
+
+SQL> SQL> connect stcdba
+Enter password:
+Connected.
+SQL> create table TEST4 ( empnum number);
+
+Table created.
+
+SQL> conn / as sysdba
+Connected.
+SQL>  select action_name,SQL_TEXT,UNIFIED_AUDIT_POLICIES ,EVENT_TIMESTAMP from unified_AUDIT_trail where DBUSERNAME='STCDBA' and EVENT_TIMESTAMP > sysdate -1/24;
+
+ACTION_NAME        SQL_TEXT                UNIFIED_AUDIT_POLICIES  EVENT_TIMESTAMP
+------------------ ----------------------- ----------------------- ---------------------------------------------------------------------------
+CREATE TABLE       create table EMP_NUM as TEST_CASE2              17-FEB-17 09.19.16.054209 AM
+                    select * from classdba.
+                   emp_tab
+
+
+We can see the new audit action ( CREATE TABLE TEST4 is not recorded in audit trail table) as expected.
+We can mention success/failure condition similar to traditional auditing:
+
+audit policy TEST_CASE2 whenever successful;
+audit policy TEST_CASE2 Whenever not successful;

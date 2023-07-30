@@ -1,0 +1,66 @@
+Creating an Oracle external table steps
+Step1: CREATE DIRECTORY <dir_name> '<Path>'-- to create a directory
+Step2: Grant READ, WRITE on DIRECTORY <dir_name> to <user>
+Step3: CREATE TABLE ORGANIZATION EXTERNAL
+-- Example
+CREATE TABLE languages(
+    language_id INT,
+    language_name VARCHAR2(30)
+)
+ORGANIZATION EXTERNAL(
+    TYPE oracle_loader
+    DEFAULT DIRECTORY <dir_name>
+    ACCESS PARAMETERS 
+    (FIELDS TERMINATED BY ',') -- Separator
+    LOCATION ('languages.csv') -- filename canbe given as     LOCATION ('<dir_name>:languages.csv')
+);
+
+-- TYPE 
+1. ORACLE_LOADER: It is default  that loads data from text data files. The ORACLE_LOADER loads data from an external table to an internal table. It cannot move data from the internal table to the external table.
+2.ORACLE_DATAPUMP: It can perform both loads and unloads. It requires the data in the binary dump file format.
+
+DEFAULT DIRECTORY clause allows you to specify the default directory for storing all input and output files. It accepts a directory object, not a directory path.
+
+# Select query and view can be created on external table. But insert, update, delete operation cannot be done.
+
+=========================Example======================================
+
+(Countries1.txt, Countries2.txt)
+
+vi Countries1.txt
+======================
+ENG,England,English
+SCO,Scotland,English
+IRE,Ireland,English
+WAL,Wales,Welsh
+
+vi Countries2.txt
+======================
+FRA,France,French
+GER,Germany,German
+USA,Unites States of America,English
+
+CREATE OR REPLACE DIRECTORY EXP_BK AS '/data';
+
+CREATE TABLE countries_ext (
+  country_code      VARCHAR2(5),
+  country_name      VARCHAR2(50),
+  country_language  VARCHAR2(50)
+)
+ORGANIZATION EXTERNAL (
+  TYPE ORACLE_LOADER
+  DEFAULT DIRECTORY EXP_BK
+  ACCESS PARAMETERS (
+    RECORDS DELIMITED BY NEWLINE
+    FIELDS TERMINATED BY ','
+    MISSING FIELD VALUES ARE NULL
+    (
+      country_code      CHAR(5),
+      country_name      CHAR(50),
+      country_language  CHAR(50)
+    )
+  )
+  LOCATION ('Countries1.txt','Countries2.txt')
+)
+PARALLEL 5
+REJECT LIMIT UNLIMITED;

@@ -1,0 +1,20 @@
+---=============== Starting the Oracle Database =============--
+Database state:
+shutdown-> nomount -> mount -> open
+
+SQL>STARTUP <stage>;
+SQL>STARTUP OPEN; 
+or only
+SQL>STARTUP
+
+or
+SQL>STARTUP NOMOUNT;
+SQL>ALTER DATABASE MOUNT;
+SQL>ALTER DATABASE OPEN;
+
+for status
+SQL> SELECT instance_name, status, database_status FROM v$instance;
+
+--------- Shutting the Oracle Database -------
+sqlplus>SHUTDOWN [ABORT | IMMEDIATE | NORMAL | TRANSACTIONAL [LOCAL]];
+-- IMMEDIATE  is recommended

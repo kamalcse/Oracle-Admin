@@ -1,0 +1,11 @@
+ASM-
+CDB- container database
+DBA-
+ETL-
+LGWR-
+PFILE-
+PGA- Program Global Area
+PMON-
+SGA- System Global Area
+SMON-
+

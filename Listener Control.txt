@@ -1,0 +1,10 @@
+---==========To launch the listener control=============----
+cmd>lsnrctrl
+lsnrctl> start
+or
+cmd>lsnrctl start -- to start the listener
+lsnrctl >status -- to verify the listener status
+More keywords....
+start           stop            status          services
+version         reload          save_config     trace
+quit            exit            set*            show*

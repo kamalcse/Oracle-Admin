@@ -1,0 +1,95 @@
+alter session set container=PDBNAME; -- to select a PDB for pluggable database
+alter session set container=XEPDB1; 
+
+--=========== Create New User/Schema =============--
+--Basic Syntax
+SQL>CREATE USER <username> -- username
+	IDENTIFIED BY <password>  -- Password
+   	[DEFAULT TABLESPACE <tablespace_name>] -- tablespace name
+	[QUOTA {<size> | UNLIMITED} ON <tablespace_name>] --Specify the maximum of space in the tablespace that the user can use. You can have multiple QUOTA clauses, each for a tablespace.
+    	[PROFILE <profile_name>]  --A user profile limits the database resources or password that the user cannot exceed
+	[PASSWORD EXPIRE] --to force the user to change the password for the first time
+	[ACCOUNT {LOCK | UNLOCK}];
+
+-- check the users of database
+SQL>SELECT username, default_tablespace, profile, authentication_type
+FROM    dba_users WHERE account_status = 'OPEN';
+
+--To enable the user to log in
+SQL> GRANT CREATE SESSION TO john;
+
+--============= to connect to oracle database:=================
+cmd>sqlplus <username>/<password>@service_name
+or
+cmd>sqlplus <username>/<password>@//host:port/service_name
+or
+sqlplus / as sysdba
+sqlplus <username>/<password> as sysdba
+or
+sqlplus <enter>
+Enter user-name: your_username
+Enter password: your_password
+or
+cmd>sqlplus /nolog
+SQL> connect <user>/<password>@<db_name>
+or
+SQL> connect <user>@<db_name>/<password>
+
+---=============== Grant Permission================
+SQL> GRANT ALL PRIVILEGES TO <user_name>; -- to grant all permission to a user
+--System privileges: CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE PROCEDURE, SYSDBA, SYSOPER
+--Object privileges: INSERT, UPDATE, DELETE, INDEX, EXECUTE
+
+SQL>GRANT {system_privileges | object_privileges } TO user [WITH ADMIN OPTION]
+--WITH ADMIN OPTION: Grant / revoke/alter/drop the privilege to / from another user.
+SQL>GRANT SELECT ANY TABLE TO <user>; -- to give permission to any table
+SQL> GRANT SELECT ON <table_name> TO {user | role}; -- to Grant SELECT on a table to a user/ role
+SQL> SELECT * FROM session_privs;
+SQL> ALTER USER <user> QUOTA UNLIMITED ON <table_space>;
+
+
+--- Revoke Permission
+SQL> REVOKE {system_privilege | object_privilege } FROM user;
+
+---ALTER USER
+SQL> ALTER USER <user_name> IDENTIFIED BY xyz123; ---to change the password
+SQL> ALTER USER <user_name> ACCOUNT LOCK|UNLOCK; --- to lock/unlock a user
+sql> ALTER USER <user_name> PASSWORD EXPIRE; --- to set user’s password expired
+SQL> ALTER USER <user_name> PROFILE <profile_name>; ---to set default profile to a user
+SQL> ALTER USER dolphin DEFAULT ROLE super; -- to set default role to a user
+
+--- Droping user
+SQL> DROP USER username [CASCADE]; -- Oracle does not drop roles created by the user even after it deletes the user.
+
+--- Unlock a user
+-- to unlock a user, First, log in to the Oracle Database as a SYS user
+SQL> ALTER USER username IDENTIFIED BY password ACCOUNT UNLOCK;
+-- if unlock an account without resetting the password, then the password remains expired.
+
+
+----To Create/Grant/ Alter/Drop Roles
+SQL> CREATE ROLE <role_name> [IDENTIFIED BY password] [NOT IDENTIFIED] -- to create a role
+SQL> GRANT {system_privileges | object_privileges} TO <role_name>; -- to grant privileges to a role
+SQL> GRANT <role_name> TO <another_role_name>;  -- to grant privileges of a role to another role.
+SQL> SET ROLE <role_name> [IDENTIFIED BY password];  -- enable the role by specific user
+SQL> SET ROLE role1, role2 IDENTIFIED BY password,...; -- to enable multiple role. It cannot enable more than 148 user-defined roles at one time.
+SQL> SET ROLE ALL; -- To enable all roles previously granted to your account. It will not enable the roles with passwords
+SQL> SET ROLE ALL EXCEPT <except_role>; --  to enable all roles except for a role
+SQL> SET ROLE NONE; -- to disable all roles of a user.
+SQL> ALTER ROLE <role_name> { NOT IDENTIFIED | IDENTIFIED BY password } -- To execute the ALTER ROLE statement, your account must either have been granted the role with ADMIN OPTION or have the ALTER ANY ROLE system privilege.
+	-- not possible to change a NOT IDENTIFIED role to a IDENTIFIED BY password role if the role has been granted to another role.
+SQL> DROP ROLE role_name; -- to delete a role and revokes it from all users and roles. To drop a role, you must have the DROP ANY ROLE system privilege or have been granted the role with the ADMIN OPTION.
+
+----To Create/Grant/ Alter/Drop Profile
+---A user profile is a set of limits on the database resources and the user password. Once you assign a profile to a user, then that user cannot exceed the database resource and password limits.
+SQL> CREATE PROFILE profile_name LIMIT { resource_parameters | password_parameters}; --to create a new user profile
+	resource_parameters =>  SESSIONS_PER_USER[UNLIMITED|Number], CPU_PER_SESSION[UNLIMITED|Number in Hundredth second], CPU_PER_CALL[UNLIMITED|Number in Hundredth second], CONNECT_TIME[UNLIMITED|Number in Minutes], IDLE_TIME[UNLIMITED|Number in Minutes], LOGICAL_READS_PER_SESSION[UNLIMITED|Number in Data Blocks], LOGICAL_READS_PER_CALL[UNLIMITED|Number in Data Blocks], PRIVATE_SGA[UNLIMITED|Memory Size], COMPOSITE_LIMIT[UNLIMITED|Number in service units calculated as a weighted sum of CPU_PER_SESSION, CONNECT_TIME, LOGICAL_READS_PER_SESSION, and PRIVATE_SGA]
+	password_parameters =>  FAILED_LOGIN_ATTEMPTS[UNLIMITED|Number], PASSWORD_LIFE_TIME[UNLIMITED|Number in Days], PASSWORD_REUSE_TIME[UNLIMITED|Number in Days], PASSWORD_REUSE_MAX[UNLIMITED|Number], PASSWORD_LOCK_TIME[UNLIMITED|Number in Days-Default is 1 day], PASSWORD_GRACE_TIME[UNLIMITED|Number in Days- default 7 days] 
+SQL> CREATE PROFILE CRM_USERS LIMIT 
+    SESSIONS_PER_USER          UNLIMITED
+    CPU_PER_SESSION            UNLIMITED 
+    CPU_PER_CALL               3000 
+    CONNECT_TIME               15;
+--ALTER PROFILE statement allows you to add, change, or delete a resource limit or password management parameter in a user profile.
+SQL> ALTER PROFILE <profile_name> LIMIT { resource_parameters | password_parameters};
+SQL> DROP PROFILE profile_name [CASCADE];
