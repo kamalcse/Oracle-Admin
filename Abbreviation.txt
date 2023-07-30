@@ -7,5 +7,5 @@ PFILE-
 PGA- Program Global Area
 PMON-
 SGA- System Global Area
-SMON-
+SMON- 
 
