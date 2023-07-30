@@ -15,7 +15,6 @@ ORGANIZATION EXTERNAL(
     LOCATION ('languages.csv') -- filename canbe given as     LOCATION ('<dir_name>:languages.csv')
 );
 
-
 -- TYPE 
 1. ORACLE_LOADER: It is default  that loads data from text data files. The ORACLE_LOADER loads data from an external table to an internal table. It cannot move data from the internal table to the external table.
 2.ORACLE_DATAPUMP: It can perform both loads and unloads. It requires the data in the binary dump file format.
