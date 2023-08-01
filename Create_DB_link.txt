@@ -1,0 +1,37 @@
+With TNS
+------------
+create database link mis
+connect to misinv
+identified by "misinv_354x"
+using 'misprod1'
+
+Without TNS
+--------------
+create database link PRODUCTDB
+connect to scott
+identified by tiger
+using '(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=10.2.1.6)(Port=1908)))(CONNECT_DATA=(SERVICE_NAME=ORCL)))';
+
+Drop command
+---------------
+drop database link mis
+
+
+--------select * from t_acc_type@mis
+
+Example
+----------
+
+
+
+create database link dwrepo
+connect to gbdata
+identified by "gbdata_354x"
+using '(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.7.105)(Port=1521)))(CONNECT_DATA=(SERVICE_NAME=DWREPO)))';
+
+create database link fad
+connect to eibs101
+identified by "remote101"
+using '(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.7.97)(Port=1521)))(CONNECT_DATA=(SERVICE_NAME=remote)))';
+
+

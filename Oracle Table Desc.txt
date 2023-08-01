@@ -26,6 +26,18 @@ SELECT * FROM all_tables; --To show all tables that are currently accessible by 
 SELECT * FROM dba_tables; -- To show all tables in the entire Oracle Database. needs privileges on the dba_tables view, or SELECT ANY DICTIONARY privilege, or SELECT_CATALOG_ROLE privilege.
 SELECT name FROM v$database; -- to see database/service name
 
+-- Role 
+SELECT * FROM DBA_ROLE_PRIVS WHERE GRANTEE = 'USER'; 	--shows all the roles that have been granted to a user, including roles that have been granted to other roles.
+SELECT * FROM USER_ROLE_PRIVS;				--shows all the roles that have been granted to the current user
+SELECT * FROM ALL_ROLE_PRIVS WHERE GRANTEE = 'USER';	-- shows all the roles that have been granted to any user, including roles that have been granted to other roles
+--Privilege
+SELECT * FROM DBA_SYS_PRIVS WHERE GRANTEE = 'USER'; -- shows all the System Privileges
+SELECT * FROM DBA_TAB_PRIVS WHERE GRANTEE = 'USER'; -- shows all the Table Privileges
+SELECT * FROM USER_SYS_PRIVS;	-- shows all the System Privileges
+SELECT * FROM USER_TAB_PRIVS;   -- shows all the Table Privileges
+SELECT * FROM ALL_SYS_PRIVS;
+SELECT * FROM ALL_TAB_PRIVS;
+
 -- Tablespaces
 SELECT tablespace_name, file_name, bytes / (1024 * 1024) as size_mb FROM dba_data_files ORDER BY tablespace_name; -- to show tablespaces with physical file
 SELECT tablespace_name, file_name, bytes/1024/1024 MB, status FROM dba_temp_files; -- to show temporary tablespaces.
