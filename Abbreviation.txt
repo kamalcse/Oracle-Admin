@@ -3,9 +3,11 @@ CDB- container database
 DBA-
 ETL-
 LGWR-
+MMON - 
 PFILE-
 PGA- Program Global Area
-PMON-
+PMON-Process Monitor
 SGA- System Global Area
 SMON- 
+RECO
 
