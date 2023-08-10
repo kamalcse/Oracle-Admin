@@ -1,0 +1,30 @@
+*Archived redo log files: These files are used to recover the database if there is some failure in the disk.
+*Alert and trace log files: These files store information about faults and steps taken, that affect the configuration of the database
+*Block: The oracle server manages data at the smallest unit which is called a block or data block. Data are actually stored in the blocks.
+*Control File: These files store database creation date and time, SCN information, backup and recovery information, and others.
+*Data Files: These files store the database information that a firm or organization needs in order to operate
+*Data Dictionary: Data Dictionary is a set of internal tables and views that support administer Oracle Database more effectively
+*Extent: Every object has one segment which is a physical collection of extents. Extents are collections of contiguous disk storage blocks. A logical storage object like a table or index every time consists of at least one extent.
+*Parameter files: These files used to specify parameters for configuring an Oracle instance when it starts up.
+*Password files: Authenticates only to the special users of the database.
+*Redo log files: These files are used to recover the database in the event of any failures.
+*Recovery Manager (RMAN): allows DBA to perform cold, hot, and incremental database backups and point-in-time recoveries.
+*Oracle Database consists of at least one database instance and one database. 
+	1.The database instance handles memory and processes. 
+	2.The database consists of physical files called data files, and can be a non-container database or a multitenant container database. An Oracle Database also uses several database system files during its operation.
+*Real Application Clusters (RAC): Oracle RAC database architecture consists of multiple instances that run on separate server machines. 
+	All of them share the same database. The cluster of server machines appear as a single server on one end, and end users and applications on the other end. This configuration is designed for high availability, scalability, and high-end performance.
+*Listener: The listener is a database server process. It receives client requests, establishes a connection to the database instance, and then hands over the client connection to the server process. 
+	The listener can run locally on the database server or run remotely. Typical Oracle RAC environments are run remotely.
+*Process:
+	1.Client processes: These processes are created and maintained to run the software code of an application program or an Oracle tool. Most environments have separate computers for client processes.
+	2.Background Processes: Background processes asynchronously perform I/O and monitor other Oracle Database processes to provide increased parallelism for better performance and reliability.
+	3.Server Processes: These processes communicate with client processes and interact with Oracle Database to fulfill requests. The processes that perform activities on behalf of clients-that is the processes that actually executes the user’s SQL statements-are referred to as server processes.
+*Program Global Area (PGA):PGA is a non-shared memory region that contains data and control information exclusively for use by an oracle process. It is created by the Oracle database when an oracle process is started, only one PGA exists for each Server Process and each Background Process. It stores data and control information for a single background process. This is not a shared part of memory, one PGA to each process only. The total instance PGA is the collection of individual PGAs.
+*System Global Area (SGA): SGA) is a memory area that stores information shared by database processes and by users of the database. It is a read and writes memory area. It is allocated when an oracle instance (database) is started up based on values specified in the initialization parameter file (either PFILE and SPFILE).
+*Segment: When a logical storage object is created within a tablespace a segment is allocated to the object.
+*Table Space: A tablespace is a logical container for storing objects such as tables, indexes, sequences, clusters, and database objects. Each tablespace has at least one physical data file that actually stores the tablespace at the operating system level.
+
+
+#Every SQL statement will have the cursor in the memory until query execution is completed
+# In the case of the ORDER BY clause, sorting takes place in the server process that is PGA 
