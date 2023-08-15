@@ -8,6 +8,6 @@ PFILE-
 PGA- Program Global Area
 PMON-Process Monitor
 SGA- System Global Area
-SMON- 
+SMON- System Monitor
 RECO
 
