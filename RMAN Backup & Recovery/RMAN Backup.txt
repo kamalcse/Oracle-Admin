@@ -1,0 +1,87 @@
+Oracle Backup Solutions:
+2 ways in Oracle to back up the database
+ 1.Oracle Recovery Manager (RMAN): A program built into Oracle databases to perform database backup and recovery operations.
+ 2.User Managed: Manual way of database backup by running SQL Plus commands and host operating commands specific to the users’ OS.
+
+RMAN Backup Types:
+1.Full Backup: A backup that stores all of the file’s data block into the image copy or used data block into the backup set, neither of them cannot be used as the parent or a part of a subsequent incremental backup.
+2.Incremental Backup (Level 0/1 Backup): A incremental backup falls into 2 categories: level 0 backup that contains used data block in the file, or a level 1 backup that stores changed data blocks since the parent backup was taken. Level 0 backup serves as the parent for a level 1 backup.
+
+Multilevel Incremental Backups:
+Differential Backup (Level 0/1 Incremental Backup): The default type of incremental backup that backs up all blocks modified since the last incremental backup at level 0 or 1.
+
+Cumulative Backup (Level 0 Incremental Backup): Backs up all blocks modified since the last backup at level 0.
+To enable archive log mode in an Oracle database, you can use the following steps:
+
+--=====================RMAN Backup Step===============================--
+Connect to the database as a user with SYSDBA privileges and enable archive log mode;
+SQL> ALTER DATABASE archivelog;
+
+1. Start RMAN and connect it to an Oracle DB.
+cmd>rman
+RMAN> connect target sys
+or
+cmd> rman target sys/pass@dbname
+cmd> rman target /
+cmd> rman target sysbackup/password@database_name
+
+2.Show the current RMAN configurations and change some parameters as you wanted.
+You can verify those changes by executing the “show all” command and add the “CLEAR” to the end of configuration command lines to restore default settings if you want.
+
+RMAN> SHOW ALL  -- to show all existing configuration
+RMAN> CONFIGURE BACKUP OPTIMIZATION ON; -- to change a configuration
+RMAN> CONFIGURE BACKUP OPTIMIZATION clear;  -- to reset a configuration to a default value 
+
+Change backup location:
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT '/changed backup/location _%t_%s_%p ';
+
+Specify retention time:
+RMAN> CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF XX DAYS;
+
+Compress the backup sets:
+CONFIGURE DEVICE TYPE DISK/sbt BACKUP TYPE TO COMPRESSED BACKUPSET;
+
+
+3.Backup Oracle databases.
+a) You can take an Oracle backup to backup set or image copy format, and it is recommended to use the former because only RMAN can access the format.
+b) Make sure the Oracle database is running before you enter the RMAN commands.
+Full backup without the archive logs:
+
+RMAN> BACKUP AS BACKUPSET DATABASE
+
+Backup archived redo logs while the Oracle DB is open:
+RMAN> BACKUP AS BACKUPSET DATABASE PLUS ARCHIVELOG;
+
+Backup tablespace only:
+RMAN> BACKUP AS BACKUPSET TABLESPACE;
+
+Incremental backups of the database:
+Create a level 0 incremental backup as the base:
+RMAN> BACKUP INCREMENTAL LEVEL 0 DATABASE;
+
+Create a level 1 cumulative incremental backup:
+RMAN> BACKUP INCREMENTAL LEVEL 1 CUMULATIVE DATABASE;
+
+Create a level 1 differential incremental backup:
+RMAN> BACKUP INCREMENTAL LEVEL 1 DATABASE; 
+
+Implement incrementally updated backups:
+It is an incremental backup strategy based on a level 0 datafile copy.
+
+RECOVER COPY OF DATABASE
+  WITH TAG 'incr_update';
+BACKUP
+  INCREMENTAL LEVEL 1
+  FOR RECOVER OF COPY WITH TAG 'incr_update'
+  DATABASE;
+
+To see the RMAN backup files, add “Is” before on the created directory; and to see all the files, use “LIST” command at the RMAN prompt.
+
+4.Assign backup tags to manage.
+RMAN> BACKUP AS BACKUPSET TAG 'TAGNAME' TABLESPACE DBNAME;
+
+5.Compress the RMAN backup.
+
+RMAN> BACKUP AS COMPRESSED BACKUPSET TAG 'TAGNAME' TABLESPACE DBNAME;
+
+Despite the convenience of backing up using Oracle RMAN, the tool also comes with quite a few questions, for instance, maintaining and managing multiple databases can be challenging; the overhead generated from separate instance catalog machines and high-consumption regular backups will degrade the database performance.

@@ -1,0 +1,94 @@
+--=====================Oracle Database Recovery Steps===============================--
+Two options in Oracle for recovering physical files:
+Use RMAN to restore the Oracle database.
+Operate OS utilities to restore backups, and then execute SQL*Plus RECOVER command.
+
+1.Start the RMAN client and connect to the target database as a user to check if there are any connection issues.
+cmd>rman
+RMAN> connect target sys
+or
+cmd> rman target sys/pass@dbname
+cmd> rman target /
+cmd> rman target sysbackup/password@database_name
+
+2.Identify the files to restore.
+
+The lost control file will immediately shut down the database, although some copy loss doesn’t need to recover the file from backup. 
+Go to step 6 to see the recovery process.
+
+Determine missing data file:
+RMAN> VALIDATE DATABASE;
+
+3.Preview backups for recovery.
+
+RESTORE DATABASE PREVIEW;
+
+To specify information if there is too much.
+
+RESTORE DATABASE PREVIEW SUMMARY;
+
+ 4.     Validate the backups to see if they are usable.
+
+RESTORE ... VALIDATEtests whether RMAN can recover a given object from a backup.
+
+VALIDATE BACKUPSET tests whether a backup set you specify is valid.
+
+5.     Provide passwords for the encrypted backup.
+
+SET DECRYPTION IDENTIFIED BY password;
+
+6.     Restore the control file from RMAN backups.
+
+You need to restore and mount the control file if all copies of it are unavailable. Run the RECOVER command, then boot the database with the RESETLOGS.
+If the RMAN connects to a recovery catalog, repeat the steps for restoring the current control file. And set the DBID if the DB name is not unique.
+If it doesn’t, restore a control file from autobackup.
+
+a) Get the DBID, the number after “ctl_c-“, based on the control file name.
+RMAN> SET DBID 00000;
+
+b) Start the Oracle DB in nomount mode.
+RMAN> STARTUP NOMOUNT;
+
+c) Restore the controlfile from the RMAN autobackup.
+RMAN> RESTORE CONTROLFILE FROM AUTOBACKUP;
+
+d) Mount the database after recovery.
+RMAN> ALTER DATABASE MOUNT;
+
+e) Recover the database and reset the online logs.
+RMAN> RECOVER DATABASE;
+RMAN> ALTER DATABASE OPEN RESETLOGS;
+
+7.Restore the archived redo logs (database is mounted or open).
+
+The default location.
+RMNAN> RESTORE ARCHIVELOG ALL;
+
+To a new location.
+RMNAN> SET ARCHIVELOG DESTINATION TO 'LOCATIONPATH';
+RMNAN> RESTORE ARCHIVELOG ALL;
+
+Chosen archive logs from 100 to 200,
+RMNAN> RESTORE ARCHIVELOG FROM SEQUENCE 100 UNTIL SEQUENCE 200;
+
+8.Restore Oracle database from RMAN full backup.
+
+RMAN> RESTORE DATABASE;
+
+9.Restore only specific tablespace (one and more).
+
+a)Take recovery database offline.
+ALTER TABLESPACE users OFFLINE IMMEDIATE;
+
+b)Use “SHOW ALL” to see channels that are preconfigured, if not, use “CONFIGURE” to set up automatic channels.
+
+c）Restore.
+RMNAN> RESTORE TABLESPACE EXAMPLE;
+RMNAN> RESTORE TABLESPACE EXAMPLE 1, EXAMPLE 2;
+
+To new locations:
+SET NEWNAME FOR DATAFILE 'PATH1' TO 'PATH2';
+
+10.Restore only specific datafiles (one and more).
+RMNAN> RESTORE DATAFILE 'FILENAME'
+RMNAN> RESTORE DATAFILE 'FILENAME1', 'FILENAME2'

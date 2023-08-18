@@ -1,0 +1,19 @@
+#RMAN connection to an target Oracle DB.
+cmd>rman
+RMAN> connect target sys
+RMAN> connect target "sys as sysdba"
+RMAN> CONNECT TARGET "user@prod AS SYSBACKUP"
+or
+cmd> rman target sys/pass@dbname
+cmd> rman target /
+cmd> rman target sysbackup/password@database_name
+
+%> rman TARGET / LOG /tmp/msglog.log APPEND  --appends the output from an RMAN session to a text file at /tmp/
+msglog.log
+
+
+RMAN>show all;  -- show the RMAN default configuration
+
+# A fast recovery area
+DB_RECOVERY_FILE_DEST and 
+DB_RECOVERY_FILE_DEST_SIZE

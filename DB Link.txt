@@ -3,6 +3,9 @@
 
 --There are two types of database links: public and private.
 --Private database links are visible to the owners while public database links are visible to all users in the database
+-- To show all database link of a user
+SQL>SELECT * FROM ALL_DB_LINKS WHERE OWNER = 'YOUR_USER_NAME';
+
 --To create a private database link
 SQL>CREATE [PUBLIC] DATABASE LINK <database_link> 
     CONNECT TO remote_user IDENTIFIED BY password

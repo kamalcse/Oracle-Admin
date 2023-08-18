@@ -1,0 +1,22 @@
+To enable archive log mode in an Oracle database, you can use the following steps:
+
+Step1:Connect to the database as a user with SYSDBA privileges.
+cmd> sqlplus sys/pass as sysdba
+
+Step2:Shut down the database.
+sql>shutdown immediate;
+
+Step3:Start the database in mount mode.
+sql> startup nomount
+sql> alter database mount
+
+Step4: Issue the following SQL command to enable archive log mode:
+SQL> select log_mode from v$database;
+sql> ALTER DATABASE archivelog; --not allowed from within a pluggable database
+
+Step5: Open the database.
+sql> ALTER DATABASE open;
+
+SQL> select log_mode from v$database; -- To check the archive log mode in database
+SQL> SELECT * FROM v$archived_log;  -- to show the archived information
+SQL> SELECT * FROM v$log; -- to show all logs
