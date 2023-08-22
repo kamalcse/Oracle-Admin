@@ -10,9 +10,11 @@ SQL>STARTUP
 or
 SQL>STARTUP NOMOUNT;
 SQL>ALTER DATABASE MOUNT;
-SQL>ALTER DATABASE OPEN;
+SQL>ALTER DATABASE OPEN; -- Normal Database open method.
+ALTER DATABASE OPEN RESETLOGS;  ---used during the process of recovering a database to reset the online redo log sequence and start a new incarnation of the database
+SQL> ALTER DATABASE OPEN READ ONLY; --INSERT, UPDATE, or DELETE won't work on DB only 'select' statement works.
 
-for status
+--for status
 SQL> SELECT instance_name, status, database_status FROM v$instance;
 
 --------- Shutting the Oracle Database -------

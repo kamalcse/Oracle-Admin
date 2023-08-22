@@ -1,0 +1,226 @@
+#RMAN connection to an target Oracle DB.
+cmd>rman
+RMAN> connect target sys
+RMAN> connect target "sys as sysdba"
+RMAN> CONNECT TARGET "user@prod AS SYSBACKUP"
+or
+cmd> rman target sys/pass@dbname
+cmd> rman target /
+cmd> rman target sysbackup/password@database_name
+
+%> rman TARGET / LOG /tmp/msglog.log APPEND  --appends the output from an RMAN session to a text file at /tmp/
+msglog.log
+
+
+RMAN>show all;  -- show the RMAN default configuration
+
+# A fast recovery area
+DB_RECOVERY_FILE_DEST and 
+DB_RECOVERY_FILE_DEST_SIZE
+
+#Inconsistent Backup:
+--In NOARCHIVELOG Mode, the database back up can be taken while it is open. It is inconsistent state.
+RMAN> BACKUP DATABASE PLUS ARCHIVELOG; -- take backup of database with all archived redo log files.
+
+#Consistent database backup:
+1. Start RMAN and connect to a target database
+2. Shut down the database consistently and then mount it.
+--In NOARCHIVELOG Mode, to guarantee that the database is in aconsistent state for a backup
+RMAN> SHUTDOWN IMMEDIATE;
+RMAN> STARTUP FORCE DBA;
+RMAN> SHUTDOWN IMMEDIATE;
+RMAN> STARTUP MOUNT;
+
+3. Run the BACKUP DATABASE command.
+--For example, enter the following command at the RMAN prompt to back up the database to the default backup device:
+RMAN> BACKUP DATABASE;
+
+--The following variation of the command creates image copy backups of all data files in the database:
+RMAN> BACKUP AS COPY DATABASE;
+
+4. Open the database and resume normal operations.
+--The following command opens the database:
+RMAN> ALTER DATABASE OPEN;
+
+#Incremental Backups:
+--Incremental backups capture block-level changes to a database made after a previous incremental backup.
+To make incremental backups of the database:
+1. Start RMAN and connect to a target database 
+2. Run the BACKUP INCREMENTAL command.
+--The following example creates a level 0 incremental backup to serve as a base for an incremental backup strategy:
+RMAN> BACKUP INCREMENTAL LEVEL 0 DATABASE;
+
+--The following example creates a level 1 cumulative incremental backup:
+BACKUP INCREMENTAL LEVEL 1 CUMULATIVE DATABASE;
+
+The following example creates a level 1 differential incremental backup:
+BACKUP INCREMENTAL LEVEL 1 DATABASE;
+
+#FOR RECOVER OF COPY Option:
+1. Using tag: FOR RECOVER OF COPY WITH TAG 'tag_name'
+RMAN> BACKUP INCREMENTAL LEVEL 1 FOR RECOVER OF COPY WITH TAG 'incr_update' DATABASE;
+
+2. Using file format name: FOR RECOVER OF COPY DATAFILECOPY FORMAT 'format'
+RMAN> BACKUP INCREMENTAL LEVEL 1 FOR RECOVER OF COPY DATAFILECOPY FORMAT '/disk2/df1.cpy' DATABASE;
+
+To implement an incrementally updated backup strategy:
+1. Start RMAN and connect to a target database 
+2. Run the RECOVER COPY and BACKUP INCREMENTAL commands on a regular basis.
+RMAN> RECOVER COPY OF DATABASE WITH TAG 'incr_update';
+RMAN> BACKUP INCREMENTAL LEVEL 1 FOR RECOVER OF COPY WITH TAG 'incr_update' DATABASE;
+
+#To validate database files which checks for corrupt blocks and missing files:
+1. Start RMAN and connect to a target database
+2. Run the BACKUP VALIDATE ... command for the desired files.
+For example, enter the following commands to validate all database files and archived redo log files for physical and logical corruption:
+RMAN> BACKUP VALIDATE CHECK LOGICAL DATABASE ARCHIVELOG ALL;
+
+--You can also use the VALIDATE command to check individual data blocks, as shown in the following example:
+RMAN> VALIDATE DATAFILE 4 BLOCK 10 TO 13;
+
+--You can also validate backup sets, as shown in the following example:
+RMAN> VALIDATE BACKUPSET 3;
+
+
+#To create and run a command file:
+1. Use a text editor to create a command file.
+For example, create a command file with the file name # my_command_file.txt
+CONNECT TARGET /
+BACKUP DATABASE PLUS ARCHIVELOG;
+LIST BACKUP;
+EXIT;
+
+2. Execute the contents of a command file by using @
+RMAN> @/my_dir/my_command_file.txt 
+or
+CMD> rman @/my_dir/my_command_file.txt
+
+#Reporting on RMAN Operations
+#Listing Backups:
+RMAN>show all;  -- show the RMAN default configuration
+RMAN>LIST BACKUP; -- This is the default mode of presentation.
+RMAN> LIST BACKUP OF DATABASE [BY BACKUP]; -- Organizes the output by backup set. This is the default mode of presentation.
+RMAN> LIST BACKUP BY FILE; -- Lists the backups according to which file was backed up
+RMAN> LIST BACKUP SUMMARY; -- show summary of backup
+RMAN> LIST BACKUP RECOVERABLE; --Lists data file backups or copies that have status AVAILABLE in the RMAN repository
+RMAN> LIST EXPIRED COPY; --List of backups which may have been deleted by an operating system utility.
+example:
+LIST BACKUP OF DATABASE;
+LIST COPY OF DATAFILE 1, 2;
+LIST BACKUP OF ARCHIVELOG FROM SEQUENCE 10;
+LIST BACKUPSET OF DATAFILE 1;
+
+RMAN> LIST COPY; -- Lists all image copies of database files.
+RMAN> LIST COPY SUMMARY;
+RMAN> LIST DATAFILECOPY [all | like | tag | double-quoted-string | integer | single-quoted-string];
+RMAN> LIST ARCHIVELOG [all | from | high | like | low | scn | sequence | time | until | double-quoted-string | integer | single-quoted-string]; --Lists all archived redo logs.
+RMAN> LIST CONTROLFILECOPY [tag | double-quoted-string | integer | single-quoted-string];
+RMAN> LIST TABLESPACE [all | archivelog | backed | backuppiece | backupset | backup | completed | controlfilecopy | copy | datafilecopy | db_unique_name | device | expired | failure | foreign | global | guid | incarnation | like | proxy | preplugin | recoverable | restore | script | tag];
+RMAN> LIST INCARNATION;  --Lists all database incarnations available in the RMAN repository.
+RMAN> LIST FAILURE; --Lists all recorded backup and restore failures.
+
+#Reporting on Database Files and Backups: The REPORT command performs more complex reporting analysis than the LIST
+command
+RMAN> REPORT NEED BACKUP DATABASE; --Shows which files need backing up under current retention policy. 
+RMAN> REPORT OBSOLETE; --Lists backups that are obsolete under the configured backup retention policy.
+RMAN> REPORT SCHEMA; --Reports the tablespaces and data files in the database at the current time (default) or a different time.
+RMAN> REPORT UNRECOVERABLE; --Lists all data files for which an unrecoverable operation has been performed against an object in the data file since the last backup of the data file.
+
+#To crosscheck all backups and copies on disk:
+RMAN> CROSSCHECK BACKUP; --Checks the status of all backups in the RMAN repository.
+RMAN> CROSSCHECK BACKUP OF DATABASE; --Checks the status of backups of the entire database.
+RMAN> CROSSCHECK BACKUP OF TABLESPACE users; --Checks the status of backups for a specific tablespace.
+RMAN> CROSSCHECK BACKUP OF CONTROLFILE; --Checks the status of control file backups.
+RMAN> CROSSCHECK BACKUP OF SPFILE; --Checks the status of server parameter file (SPFILE) backups.
+--------
+RMAN> CROSSCHECK COPY;  --Checks the status of all image copies in the RMAN repository.
+RMAN> CROSSCHECK ARCHIVELOG ALL; --Checks the status of all archived redo logs in the RMAN repository.
+RMAN> CROSSCHECK DATAFILECOPY;  --Checks the status of all data file copies in the RMAN repository.
+RMAN> CROSSCHECK CONTROLFILECOPY; --Checks the status of all control file copies in the RMAN repository.
+RMAN> CROSSCHECK BACKUPSET 1234, 5678; --Checks the status of specific backup sets by specifying their unique IDs.
+
+#To delete obsolete backups and copies:
+RMAN> DELETE OBSOLETE;
+
+#Listing Failures and Determining Repair Options
+RMAN> LIST FAILURE;   --show all known failures
+RMAN> ADVISE FAILURE;  --shows both manual and automated repair options. First try to fix the problem manually. If you cannot fix the problem manually, then review the automated repair section.
+RMAN> REPAIR FAILURE;  -- repair failures that were detected
+
+#Rewinding a Database with Flashback Database: database must have been previously configured to generate flashback logs.
+--You cannot use theflashback database to repair media failures or missing data files.
+1. Start RMAN and connect to a target database.
+2. Ensure that the database is in a mounted state.
+SQL> SHUTDOWN IMMEDIATE;
+SQL> STARTUP MOUNT;
+
+3. Run the FLASHBACK DATABASE command. The following examples illustrate different forms of the command:
+FLASHBACK DATABASE TO SCN 861150;
+FLASHBACK DATABASE TO RESTORE POINT BEFORE_CHANGES;
+FLASHBACK DATABASE TO TIMESTAMP TO_DATE(04-DEC-2009 03:30:00','DD-MON-YYYY HH24:MI:SS');
+
+4. After performing the Flashback Database, open the database read-only in SQL*Plus and
+run some queries to verify the database contents.
+Open the database read-only as follows:
+ALTER DATABASE OPEN READ ONLY;
+
+5. If satisfied with the results, then issue the following sequence of commands to shut down
+and then open the database:
+SHUTDOWN IMMEDIATE;
+STARTUP MOUNT;
+ALTER DATABASE OPEN RESETLOGS;
+
+#Restore and Recover Database Files:
+
+--To preview a database restore and recovery:
+1. Start RMAN and connect to the target database 
+2. Optionally, list the current tablespaces and data files
+RMAN> REPORT SCHEMA;
+3. Run the RESTORE DATABASE command with the PREVIEW option. The following command specifies SUMMARY so that the backup metadata is not displayed in verbose mode (sample output included):
+RMAN> RESTORE DATABASE PREVIEW SUMMARY;
+
+In this case, RMAN queries the metadata and does not actually read the backup files. The database can be open when you run this command.
+
+--To recover the whole database:
+1. Prepare for recovery with 'report schema' and 'restore preview' command
+2. Place the database in a mounted state.
+RMAN> STARTUP FORCE MOUNT;
+3. Restore the database.
+The following example uses the preconfigured disk channel to restore the database:
+RMAN> RESTORE DATABASE;
+4. Recover the database, as shown in the following example:
+RMAN> RECOVER DATABASE;
+5. Open the database, as shown in the following example:
+RMAN> ALTER DATABASE OPEN;
+
+Recovering Tablespaces:
+--To recover an individual tablespace when the database is open:
+1. Prepare for recovery with 'report schema' and 'restore preview' command
+2. Take the tablespace to be recovered offline. The following example takes the USERS tablespace offline:
+RMAN> ALTER TABLESPACE users OFFLINE;
+
+3. Restore and recover the tablespace. The following RUN command, which you execute at the RMAN prompt, sets a new name
+for the data file in the USERS tablespace:
+RUN
+{
+SET NEWNAME FOR DATAFILE '/disk1/oradata/prod/users01.dbf' TO '/disk2/users01.dbf';
+RESTORE TABLESPACE users;
+SWITCH DATAFILE ALL; # update control file with new file names
+RECOVER TABLESPACE users;
+}
+
+4. Bring the tablespace online, as shown in the following example:
+RMAN> ALTER TABLESPACE users ONLINE;
+
+You can also use RESTORE DATAFILE and RECOVER DATAFILE for recovery at the data file level.
+
+--To recover data blocks: any corrupted blocksare listed in V$DATABASE_BLOCK_CORRUPTION
+1. Start RMAN and connect to the target database 
+2. Obtain the block numbers of the corrupted blocks if you do not have this information.
+RMAN> SELECT NAME, VALUE FROM V$DIAG_INFO;
+3. Run the RECOVER command to repair the blocks. The following RMAN command recovers all corrupted blocks:
+RMAN> RECOVER CORRUPTION LIST;
+
+You can also recover individual blocks, as shown in the following example:
+RMAN> RECOVER DATAFILE 1 BLOCK 233, 235 DATAFILE 2 BLOCK 100 TO 200;
+

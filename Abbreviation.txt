@@ -4,10 +4,14 @@ DBA-
 ETL-
 LGWR-
 MMON - 
+MML - Media Management Layer
 PFILE-
 PGA- Program Global Area
 PMON-Process Monitor
+RECO
+RMAN - Recovery Manager
 SGA- System Global Area
 SMON- System Monitor
-RECO
+SBT - System Backup to Tape
+
 
