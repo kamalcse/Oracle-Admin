@@ -1,0 +1,6 @@
+--- Connecting to a Catalog with target DB
+cmd>rman
+RMAN> CONNECT TARGET "user@prod AS SYSBACKUP"
+RMAN> connect catalog user@catdb
+or
+cmd> rman target sys/pass@dbname catalog user@catdb

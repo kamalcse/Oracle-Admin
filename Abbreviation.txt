@@ -1,10 +1,12 @@
 ASM-
+BSP - Backup Solutions Program(https://www.oracle.com/database/technologies/high-availability/backup-solutions-program.html)
 CDB- container database
 DBA-
 ETL-
 LGWR-
 MMON - 
 MML - Media Management Layer
+OMF - Oracle Managed Files 
 PFILE-
 PGA- Program Global Area
 PMON-Process Monitor

@@ -1,0 +1,32 @@
+
+#Reporting on RMAN Operations
+#Listing Backups:
+RMAN>show all;  -- show the RMAN default configuration
+RMAN> LIST BACKUP [OF options]; -- This is the default mode of presentation.
+RMAN> LIST BACKUPSET [OF options] -- show the list of backup sets.
+RMAN> LIST BACKUP OF DATABASE [BY BACKUP]; -- Organizes the output by backup set. This is the default mode of presentation.
+RMAN> LIST BACKUP BY FILE; -- Lists the backups according to which file was backed up
+RMAN> LIST BACKUP SUMMARY; -- show summary of backup
+RMAN> LIST BACKUP RECOVERABLE; --Lists data file backups or copies that have status AVAILABLE in the RMAN repository
+RMAN> LIST EXPIRED COPY; --List of backups which may have been deleted by an operating system utility.
+example:
+LIST BACKUP OF DATABASE;
+LIST COPY OF DATAFILE 1, 2;
+LIST BACKUP OF ARCHIVELOG FROM SEQUENCE 10;
+LIST BACKUPSET OF DATAFILE 1;
+
+RMAN> LIST COPY; -- Lists all image copies of database files.
+RMAN> LIST COPY SUMMARY;
+RMAN> LIST DATAFILECOPY [all | like | tag | double-quoted-string | integer | single-quoted-string];
+RMAN> LIST ARCHIVELOG [all | from | high | like | low | scn | sequence | time | until | double-quoted-string | integer | single-quoted-string]; --Lists all archived redo logs.
+RMAN> LIST CONTROLFILECOPY [tag | double-quoted-string | integer | single-quoted-string];
+RMAN> LIST TABLESPACE [all | archivelog | backed | backuppiece | backupset | backup | completed | controlfilecopy | copy | datafilecopy | db_unique_name | device | expired | failure | foreign | global | guid | incarnation | like | proxy | preplugin | recoverable | restore | script | tag];
+RMAN> LIST INCARNATION;  --Lists all database incarnations available in the RMAN repository.
+RMAN> LIST FAILURE; --Lists all recorded backup and restore failures.
+
+#Reporting on Database Files and Backups: The REPORT command performs more complex reporting analysis than the LIST
+command
+RMAN> REPORT NEED BACKUP DATABASE; --Shows which files need backing up under current retention policy. 
+RMAN> REPORT OBSOLETE; --Lists backups that are obsolete under the configured backup retention policy.
+RMAN> REPORT SCHEMA; --Reports the tablespaces and data files in the database at the current time (default) or a different time.
+RMAN> REPORT UNRECOVERABLE; --Lists all data files for which an unrecoverable operation has been performed against an object in the data file since the last backup of the data file.

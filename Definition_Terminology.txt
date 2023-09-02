@@ -23,6 +23,7 @@
 *Program Global Area (PGA):PGA is a non-shared memory region that contains data and control information exclusively for use by an oracle process. It is created by the Oracle database when an oracle process is started, only one PGA exists for each Server Process and each Background Process. It stores data and control information for a single background process. This is not a shared part of memory, one PGA to each process only. The total instance PGA is the collection of individual PGAs.
 *System Global Area (SGA): SGA) is a memory area that stores information shared by database processes and by users of the database. It is a read and writes memory area. It is allocated when an oracle instance (database) is started up based on values specified in the initialization parameter file (either PFILE and SPFILE).
 *Segment: When a logical storage object is created within a tablespace a segment is allocated to the object.
+*Secure Backup: Secure Backup  is a media manager that provides reliable and secure data protection through file system backup to tape.
 *Table Space: A tablespace is a logical container for storing objects such as tables, indexes, sequences, clusters, and database objects. Each tablespace has at least one physical data file that actually stores the tablespace at the operating system level.
 
 

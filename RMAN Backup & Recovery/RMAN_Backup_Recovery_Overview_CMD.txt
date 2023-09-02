@@ -1,22 +1,17 @@
-#RMAN connection to an target Oracle DB.
-cmd>rman
-RMAN> connect target sys
-RMAN> connect target "sys as sysdba"
-RMAN> CONNECT TARGET "user@prod AS SYSBACKUP"
-or
-cmd> rman target sys/pass@dbname
-cmd> rman target /
-cmd> rman target sysbackup/password@database_name
+Most RMAN commands take several parameters and must end with a semicolon.
+Some commands, such as STARTUP, SHUTDOWN, and CONNECT, can be used with or without a semicolon.
 
-%> rman TARGET / LOG /tmp/msglog.log APPEND  --appends the output from an RMAN session to a text file at /tmp/
-msglog.log
+%> rman LOG /tmp/rman.log  -- to print rman log output in only rman.log file
+%> rman | tee rman.log -- to print rman log output in both rman.log file and rman output
 
+--Entering Comments in RMAN Command Files
+The comment character in RMAN is a pound sign (#)
+RMAN> BACKUP # this is a comment
+2> SPFILE;
 
-RMAN>show all;  -- show the RMAN default configuration
-
-# A fast recovery area
-DB_RECOVERY_FILE_DEST and 
-DB_RECOVERY_FILE_DEST_SIZE
+-- To check syntax of RMAN command
+cmd> rman CHECKSYNTAX
+cmd> rman CHECKSYNTAX @filename -- check sysnax in a file
 
 #Inconsistent Backup:
 --In NOARCHIVELOG Mode, the database back up can be taken while it is open. It is inconsistent state.
@@ -34,6 +29,18 @@ RMAN> STARTUP MOUNT;
 3. Run the BACKUP DATABASE command.
 --For example, enter the following command at the RMAN prompt to back up the database to the default backup device:
 RMAN> BACKUP DATABASE;
+RMAN> BACKUP DATABASE INCLUDE CURRENT CONTROLFILE;
+RMAN> BACKUP PLUGGABLE DATABASE <pdb_name1>,<pdb_name2>, ...; -- backup pluggable database.
+RMAN> BACKUP ARCHIVELOG ALL; --backs up the archived redo logs
+
+--override the default device
+BACKUP DEVICE TYPE sbt DATABASE;
+BACKUP DEVICE TYPE DISK DATABASE;
+
+-- to take backup from Command File named 'cmdfile1.txt' which holds 'BACKUP DATABASE PLUS ARCHIVELOG;'
+cmd> rman TARGET / @cmdfile1.txt  
+or
+RMAN> @cmdfile1.txt  
 
 --The following variation of the command creates image copy backups of all data files in the database:
 RMAN> BACKUP AS COPY DATABASE;
@@ -69,18 +76,6 @@ To implement an incrementally updated backup strategy:
 RMAN> RECOVER COPY OF DATABASE WITH TAG 'incr_update';
 RMAN> BACKUP INCREMENTAL LEVEL 1 FOR RECOVER OF COPY WITH TAG 'incr_update' DATABASE;
 
-#To validate database files which checks for corrupt blocks and missing files:
-1. Start RMAN and connect to a target database
-2. Run the BACKUP VALIDATE ... command for the desired files.
-For example, enter the following commands to validate all database files and archived redo log files for physical and logical corruption:
-RMAN> BACKUP VALIDATE CHECK LOGICAL DATABASE ARCHIVELOG ALL;
-
---You can also use the VALIDATE command to check individual data blocks, as shown in the following example:
-RMAN> VALIDATE DATAFILE 4 BLOCK 10 TO 13;
-
---You can also validate backup sets, as shown in the following example:
-RMAN> VALIDATE BACKUPSET 3;
-
 
 #To create and run a command file:
 1. Use a text editor to create a command file.
@@ -95,80 +90,7 @@ RMAN> @/my_dir/my_command_file.txt
 or
 CMD> rman @/my_dir/my_command_file.txt
 
-#Reporting on RMAN Operations
-#Listing Backups:
-RMAN>show all;  -- show the RMAN default configuration
-RMAN>LIST BACKUP; -- This is the default mode of presentation.
-RMAN> LIST BACKUP OF DATABASE [BY BACKUP]; -- Organizes the output by backup set. This is the default mode of presentation.
-RMAN> LIST BACKUP BY FILE; -- Lists the backups according to which file was backed up
-RMAN> LIST BACKUP SUMMARY; -- show summary of backup
-RMAN> LIST BACKUP RECOVERABLE; --Lists data file backups or copies that have status AVAILABLE in the RMAN repository
-RMAN> LIST EXPIRED COPY; --List of backups which may have been deleted by an operating system utility.
-example:
-LIST BACKUP OF DATABASE;
-LIST COPY OF DATAFILE 1, 2;
-LIST BACKUP OF ARCHIVELOG FROM SEQUENCE 10;
-LIST BACKUPSET OF DATAFILE 1;
 
-RMAN> LIST COPY; -- Lists all image copies of database files.
-RMAN> LIST COPY SUMMARY;
-RMAN> LIST DATAFILECOPY [all | like | tag | double-quoted-string | integer | single-quoted-string];
-RMAN> LIST ARCHIVELOG [all | from | high | like | low | scn | sequence | time | until | double-quoted-string | integer | single-quoted-string]; --Lists all archived redo logs.
-RMAN> LIST CONTROLFILECOPY [tag | double-quoted-string | integer | single-quoted-string];
-RMAN> LIST TABLESPACE [all | archivelog | backed | backuppiece | backupset | backup | completed | controlfilecopy | copy | datafilecopy | db_unique_name | device | expired | failure | foreign | global | guid | incarnation | like | proxy | preplugin | recoverable | restore | script | tag];
-RMAN> LIST INCARNATION;  --Lists all database incarnations available in the RMAN repository.
-RMAN> LIST FAILURE; --Lists all recorded backup and restore failures.
-
-#Reporting on Database Files and Backups: The REPORT command performs more complex reporting analysis than the LIST
-command
-RMAN> REPORT NEED BACKUP DATABASE; --Shows which files need backing up under current retention policy. 
-RMAN> REPORT OBSOLETE; --Lists backups that are obsolete under the configured backup retention policy.
-RMAN> REPORT SCHEMA; --Reports the tablespaces and data files in the database at the current time (default) or a different time.
-RMAN> REPORT UNRECOVERABLE; --Lists all data files for which an unrecoverable operation has been performed against an object in the data file since the last backup of the data file.
-
-#To crosscheck all backups and copies on disk:
-RMAN> CROSSCHECK BACKUP; --Checks the status of all backups in the RMAN repository.
-RMAN> CROSSCHECK BACKUP OF DATABASE; --Checks the status of backups of the entire database.
-RMAN> CROSSCHECK BACKUP OF TABLESPACE users; --Checks the status of backups for a specific tablespace.
-RMAN> CROSSCHECK BACKUP OF CONTROLFILE; --Checks the status of control file backups.
-RMAN> CROSSCHECK BACKUP OF SPFILE; --Checks the status of server parameter file (SPFILE) backups.
---------
-RMAN> CROSSCHECK COPY;  --Checks the status of all image copies in the RMAN repository.
-RMAN> CROSSCHECK ARCHIVELOG ALL; --Checks the status of all archived redo logs in the RMAN repository.
-RMAN> CROSSCHECK DATAFILECOPY;  --Checks the status of all data file copies in the RMAN repository.
-RMAN> CROSSCHECK CONTROLFILECOPY; --Checks the status of all control file copies in the RMAN repository.
-RMAN> CROSSCHECK BACKUPSET 1234, 5678; --Checks the status of specific backup sets by specifying their unique IDs.
-
-#To delete obsolete backups and copies:
-RMAN> DELETE OBSOLETE;
-
-#Listing Failures and Determining Repair Options
-RMAN> LIST FAILURE;   --show all known failures
-RMAN> ADVISE FAILURE;  --shows both manual and automated repair options. First try to fix the problem manually. If you cannot fix the problem manually, then review the automated repair section.
-RMAN> REPAIR FAILURE;  -- repair failures that were detected
-
-#Rewinding a Database with Flashback Database: database must have been previously configured to generate flashback logs.
---You cannot use theflashback database to repair media failures or missing data files.
-1. Start RMAN and connect to a target database.
-2. Ensure that the database is in a mounted state.
-SQL> SHUTDOWN IMMEDIATE;
-SQL> STARTUP MOUNT;
-
-3. Run the FLASHBACK DATABASE command. The following examples illustrate different forms of the command:
-FLASHBACK DATABASE TO SCN 861150;
-FLASHBACK DATABASE TO RESTORE POINT BEFORE_CHANGES;
-FLASHBACK DATABASE TO TIMESTAMP TO_DATE(04-DEC-2009 03:30:00','DD-MON-YYYY HH24:MI:SS');
-
-4. After performing the Flashback Database, open the database read-only in SQL*Plus and
-run some queries to verify the database contents.
-Open the database read-only as follows:
-ALTER DATABASE OPEN READ ONLY;
-
-5. If satisfied with the results, then issue the following sequence of commands to shut down
-and then open the database:
-SHUTDOWN IMMEDIATE;
-STARTUP MOUNT;
-ALTER DATABASE OPEN RESETLOGS;
 
 #Restore and Recover Database Files:
 

@@ -1,0 +1,4 @@
+#Listing Failures and Determining Repair Options
+RMAN> LIST FAILURE;   --show all known failures
+RMAN> ADVISE FAILURE;  --shows both manual and automated repair options. First try to fix the problem manually. If you cannot fix the problem manually, then review the automated repair section.
+RMAN> REPAIR FAILURE;  -- repair failures that were detected

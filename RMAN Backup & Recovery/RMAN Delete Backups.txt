@@ -1,0 +1,13 @@
+#To delete obsolete backups and copies:
+RMAN> DELETE OBSOLETE;  --deletes backups that are considered obsolete based on the retention policy.
+RMAN> DELETE EXPIRED; --deletes backup records and files that are marked as expired.
+RMAN> DELETE ARCHIVELOG ALL;  -- delete archived redo log files.
+RMAN> DELETE ARCHIVELOG ALL INPUT; --delete archived redo log files without prompting for confirmation.
+RMAN> DELETE BACKUPSET ALL INPUT; --deletes all types of backups and files without prompting for confirmation.
+RMAN> DELETE BACKUPSET <backup_set_id1,backup_set_id2...>; -- delete the selected backup set
+RMAN> DELETE BACKUPSET <backup_set_id1,backup_set_id2...> NOPROMPT; -- delete the selected backup set without no prompt
+RMAN> DELETE BACKUPSET <backup_set_id1,backup_set_id2...> FORCE; --forcefully deletes backups even if they are needed for database recovery.
+RMAN> DELETE BACKUPSET UNTIL TIME 'TO_DATE('2023-07-15 12:00:00', 'YYYY-MM-DD HH24:MI:SS')'; --Deletes backups and archived logs until the specified timestamp.
+RMAN> DELETE ARCHIVELOG UNTIL SEQUENCE <sequence_number> THREAD <thread_number>; --Deletes backups and archived logs until a specific sequence number and thread number.
+RMAN> DELETE COPY OF TABLESPACE users; -- delete specific image copies of database files.
+RMAN> DELETE BACKUPSET DEVICE TYPE 'DISK';  --Deletes backups from a specific device type (e.g., DISK or SBT_TAPE).

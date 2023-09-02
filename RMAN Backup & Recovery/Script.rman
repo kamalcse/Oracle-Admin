@@ -1,0 +1,2 @@
+connect target sys/system
+list backup;

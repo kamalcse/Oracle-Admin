@@ -1,0 +1,5 @@
+# A fast recovery area
+DB_RECOVERY_FILE_DEST and DB_RECOVERY_FILE_DEST_SIZE
+SQL> alter system set DB_RECOVERY_FILE_DEST_SIZE= 10G scope=both; -- sets the disk size
+SQL> alter system set db_recovery_file_dest ="F:\Ora Backup" scope=both; -- set the channel path destination folder
+SQL> SELECT * FROM V$RECOVERY_FILE_DEST; --verify the FRA configuration

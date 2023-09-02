@@ -1,0 +1,88 @@
+--=================================================--
+Users connecting with RMAN to a target or auxiliary database require either the SYSDBA or SYSBACKUP system privilege.
+
+#RMAN connection to an target Oracle DB.
+cmd>rman
+RMAN> connect target sys
+RMAN> connect target "sys as sysdba"
+RMAN> CONNECT TARGET "user@prod AS SYSBACKUP"
+or
+cmd> rman target sys/pass@dbname
+cmd> rman target /
+cmd> rman target sysbackup/password@database_name
+cmd> rman TARGET "'sbu/rman;pwd@prod AS SYSBACKUP'" -- connect when password contains semicolon(;)
+cmd> rman target user/pass@dbname nocatalog -- connected to target database using target database control file instead of recovery catalog
+cmd> rman target / auxiliary user[/pass]@netservice -- to connect auxilliary database
+cmd> rman target / catalog user[/pass]@netservice -- to connect catalog database
+
+--If you are using a recovery catalog, you can configure RMAN to connect to it:
+RMAN> CONNECT CATALOG username/password@recovery_catalog;
+or
+CMD> RMAN target user/pass@db CATALOG username/password@recovery_catalog;
+
+%> rman TARGET / LOG /tmp/msglog.log APPEND  --appends the output from an RMAN session to a text file at /tmp/
+msglog.log
+
+--To quit RMAN and terminate the program, enter EXIT or QUIT at the RMAN prompt:
+RMAN> EXIT/QUIT
+
+
+--=================================================--
+# RMAN configuration related works
+RMAN>show all;  -- show the RMAN default configuration
+RMAN> CONFIGURE ... CLEAR -- to set default configuration
+
+-- Channel 
+--RMAN allocates one disk channel for all operations. You can specify different options for this channel, for example, a new default location for backups.
+CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT '+dgroup1'; -- configure an ASM disk location
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT /tmp/%U;
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT '/backup/%U';
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK FORMAT '/disk1/ora_df%t_s%s_s%p';
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK MAXPIECESIZE 2G; -- to configure piece size
+
+--Overriding Configured Channels during running a job
+RUN
+{
+ALLOCATE CHANNEL c1 DEVICE TYPE DISK;
+BACKUP TABLESPACE users;
+}
+
+RMAN> CONFIGURE DEFAULT DEVICE TYPE TO DISK; --set the default destination for backups to disk
+RMAN> CONFIGURE DEVICE TYPE DISK BACKUP TYPE TO COPY; # image copies
+RMAN> CONFIGURE DEVICE TYPE DISK BACKUP TYPE TO BACKUPSET; # uncompressed
+RMAN> CONFIGURE DEVICE TYPE DISK BACKUP TYPE TO COMPRESSED BACKUPSET; --to enable backup compression:
+RMAN> CONFIGURE DEVICE TYPE sbt BACKUP TYPE TO COMPRESSED BACKUPSET; --to enable backup compression in Tape:
+
+--set a retention policy based on redundancy or recovery window
+RMAN> CONFIGURE RETENTION POLICY TO REDUNDANCY 3; -- Retain 3 backups
+-- or
+RMAN> CONFIGURE RETENTION POLICY TO RECOVERY WINDOW OF 7 DAYS; -- Retain for 7 days
+
+--Configure how RMAN handles archived redo logs
+RMAN> CONFIGURE ARCHIVELOG DELETION POLICY TO BACKED UP 2 TIMES TO DISK; --delete archived logs after backup
+
+--Configure Automatic Channel Allocation:
+RMAN> CONFIGURE DEVICE TYPE DISK PARALLELISM 4;  --to configure parallelism
+
+--Set Backup Encryption (Optional):
+RMAN> CONFIGURE ENCRYPTION FOR DATABASE ON; --To encrypt backups, you can configure RMAN to use the Oracle Transparent Data Encryption (TDE) feature:
+
+--Configure Snapshot Control File Autobackup:
+--The valid formats for control file autobackups are: %D, %I, %M, %Y, %F, %T, %d, and %n.
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP ON;
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP OFF;
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '?/oradata/cf_%F'; --To change the default format for the autobackup file:
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO '+dgroup1/%F'; -- ASM file
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK CLEAR; -- to go at default settings
+RMAN> CONFIGURE CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE sbt CLEAR; -- for ASM 
+RMAN> SET CONTROLFILE AUTOBACKUP FORMAT FOR DEVICE TYPE DISK TO 'controlfile_%F'; -- to override in runtime
+
+--Configure Backup Optimization (Optional):
+RMAN> CONFIGURE BACKUP OPTIMIZATION ON;
+
+--Set Expiration Policy for Backups: It defines how long backups are retained in the FRA or other backup destinations
+RMAN> CONFIGURE BACKUP OPTIMIZATION OFF; -- Turn off optimization to set an expiration policy DELETE EXPIRED BACKUP;
+
+--Configure Channel Settings: You can configure specific channel settings, such as parallelism and device type, for backup and restore operations:
+RMAN> CONFIGURE CHANNEL DEVICE TYPE DISK PARALLELISM 2;
+

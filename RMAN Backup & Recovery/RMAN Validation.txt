@@ -1,0 +1,11 @@
+#To validate database files which checks for corrupt blocks and missing files:
+1. Start RMAN and connect to a target database
+2. Run the BACKUP VALIDATE ... command for the desired files.
+For example, enter the following commands to validate all database files and archived redo log files for physical and logical corruption:
+RMAN> BACKUP VALIDATE CHECK LOGICAL DATABASE ARCHIVELOG ALL;
+
+--You can also use the VALIDATE command to check individual data blocks, as shown in the following example:
+RMAN> VALIDATE DATAFILE 4 BLOCK 10 TO 13;
+
+--You can also validate backup sets, as shown in the following example:
+RMAN> VALIDATE BACKUPSET 3;

@@ -1,0 +1,25 @@
+
+#Rewinding a Database with Flashback Database: database must have been previously configured to generate flashback logs.
+SQL> SELECT flashback_on FROM v$database;
+SQL> ALTER DATABASE FLASHBACK ON;
+--You cannot use theflashback database to repair media failures or missing data files.
+1. Start RMAN and connect to a target database.
+2. Ensure that the database is in a mounted state.
+SQL> SHUTDOWN IMMEDIATE;
+SQL> STARTUP MOUNT;
+
+3. Run the FLASHBACK DATABASE command. The following examples illustrate different forms of the command:
+FLASHBACK DATABASE TO SCN 861150;
+FLASHBACK DATABASE TO RESTORE POINT BEFORE_CHANGES;
+FLASHBACK DATABASE TO TIMESTAMP TO_DATE(04-DEC-2009 03:30:00','DD-MON-YYYY HH24:MI:SS');
+
+4. After performing the Flashback Database, open the database read-only in SQL*Plus and
+run some queries to verify the database contents.
+Open the database read-only as follows:
+ALTER DATABASE OPEN READ ONLY;
+
+5. If satisfied with the results, then issue the following sequence of commands to shut down
+and then open the database:
+SHUTDOWN IMMEDIATE;
+STARTUP MOUNT;
+ALTER DATABASE OPEN RESETLOGS;

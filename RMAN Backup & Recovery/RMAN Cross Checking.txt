@@ -1,0 +1,12 @@
+#To crosscheck all backups and copies on disk:
+RMAN> CROSSCHECK BACKUP; --Checks the status of all backups in the RMAN repository.
+RMAN> CROSSCHECK BACKUP OF DATABASE; --Checks the status of backups of the entire database.
+RMAN> CROSSCHECK BACKUP OF TABLESPACE users; --Checks the status of backups for a specific tablespace.
+RMAN> CROSSCHECK BACKUP OF CONTROLFILE; --Checks the status of control file backups.
+RMAN> CROSSCHECK BACKUP OF SPFILE; --Checks the status of server parameter file (SPFILE) backups.
+--------
+RMAN> CROSSCHECK COPY;  --Checks the status of all image copies in the RMAN repository.
+RMAN> CROSSCHECK ARCHIVELOG ALL; --Checks the status of all archived redo logs in the RMAN repository.
+RMAN> CROSSCHECK DATAFILECOPY;  --Checks the status of all data file copies in the RMAN repository.
+RMAN> CROSSCHECK CONTROLFILECOPY; --Checks the status of all control file copies in the RMAN repository.
+RMAN> CROSSCHECK BACKUPSET 1234, 5678; --Checks the status of specific backup sets by specifying their unique IDs.
